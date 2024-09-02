@@ -125,15 +125,8 @@ public abstract class Node implements INode {
         nodeData = new NodeData(this.capacity + 1);// TODO [][]
         mbr = new Region[this.capacity + 1];
         identifiers = new int[this.capacity + 1];
-        //docList = new ArrayList<>(this.capacity + 1);   // TODO CHANGE TO []
-        //docTest = new HashMap<>(this.capacity + 1);
 
-        //TEST
         docList = new HashSet[this.capacity + 1];
-        //docList = new ArrayList<>(this.capacity + 1);// TODO CHANGE TO []
-        //for(int i=0; i<this.capacity+1; i++)
-        //    docList.add(i, new HashSet<>());
-        //docList = new ArrayList<>(Collections.nCopies(this.capacity + 1, null));// TODO CHANGE TO []
         doc = new HashSet<>();
     }
 
@@ -148,13 +141,8 @@ public abstract class Node implements INode {
             dataLength[children] = 0;
         }
 
-        //dataLength[children] = (entryData != null) ? entryData.data.size() : 0;
-        //data.data.set(children, entryData);
-        //data.data = entryData.data;
         this.mbr[children] = mbr;
         identifiers[children] = id;
-        //docList.set(children, doc);
-        //docTest.put(children, doc);
         docList[children] = doc;
 
         totalDataLength += dataLength[children];
@@ -308,8 +296,6 @@ public abstract class Node implements INode {
         this.mbr[capacity] = mbr;
         identifiers[capacity] = id;
         docList[capacity] = doc;
-        //docList.set(capacity, doc);
-        //docTest.put(children, doc);
 
         // initialize each group with the seed entries.
         int[] seeds = pickSeeds();

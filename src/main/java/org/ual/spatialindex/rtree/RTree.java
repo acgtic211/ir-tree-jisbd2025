@@ -131,7 +131,6 @@ public class RTree implements ISpatialIndex {
     // ISpatialIndex interface
     //
 
-    //TODO
     public void insertData(final NodeData data, final IShape shape, int id) {
         if (shape.getDimension() != dimension)
             throw new IllegalArgumentException("insertData: Shape has the wrong number of dimensions.");
@@ -160,19 +159,18 @@ public class RTree implements ISpatialIndex {
         }
     }
 
-    //TODO
     public void containmentQuery(final IShape query, final IVisitor visitor) {
         if (query.getDimension() != dimension)
             throw new IllegalArgumentException("containmentQuery: Shape has the wrong number of dimensions.");
         rangeQuery(SpatialIndex.ContainmentQuery, query, visitor);
     }
-    //TODO
+
     public void intersectionQuery(final IShape query, final IVisitor visitor) {
         if (query.getDimension() != dimension)
             throw new IllegalArgumentException("intersectionQuery: Shape has the wrong number of dimensions.");
         rangeQuery(SpatialIndex.IntersectionQuery, query, visitor);
     }
-    //TODO
+
     public void pointLocationQuery(final IShape query, final IVisitor visitor) {
         if (query.getDimension() != dimension)
             throw new IllegalArgumentException("pointLocationQuery: Shape has the wrong number of dimensions.");
@@ -278,7 +276,7 @@ public class RTree implements ISpatialIndex {
             rwLock.readUnlock();
         }
     }
-    //TODO
+
     public PropertySet getIndexProperties() {
         PropertySet ret = new PropertySet();
 
@@ -308,15 +306,15 @@ public class RTree implements ISpatialIndex {
 
         return ret;
     }
-    //TODO
+
     public void addWriteNodeCommand(INodeCommand nc) {
         writeNodeCommands.add(nc);
     }
-    //TODO
+
     public void addReadNodeCommand(INodeCommand nc) {
         readNodeCommands.add(nc);
     }
-    //TODO
+
     public void addDeleteNodeCommand(INodeCommand nc) {
         deleteNodeCommands.add(nc);
     }
