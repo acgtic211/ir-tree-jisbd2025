@@ -92,7 +92,7 @@ public class BuildRTreeEnhanced {
         logger.info("Operations: {}", count);
         logger.info("Tree: {}", tree);
         //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
-        logger.info("Time: {} ms", (end - start));
+        logger.info("RTree Enhanced build in: {} ms", (end - start));
 
         // since we created a new RTree, the PropertySet that was used to initialize the structure
         // now contains the IndexIdentifier property, which can be used later to reuse the index.

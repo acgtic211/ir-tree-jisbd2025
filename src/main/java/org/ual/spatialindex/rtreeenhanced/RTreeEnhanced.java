@@ -1071,7 +1071,7 @@ public class RTreeEnhanced implements ISpatialIndex {
                     System.exit(-1);
                 }
                 int cluster = var;
-                logger.info("Adding DOC: nodeID: {} docID: {} DOC: {} Cluster: {}",n.identifier, docID, document, cluster);
+                logger.debug("Adding DOC: nodeID: {} docID: {} DOC: {} Cluster: {}",n.identifier, docID, document, cluster);
                 invertedFile.addDocument(n.identifier, docID, document, cluster);
             }
             ArrayList<ArrayList<WeightEntry>> pseudoDoc = invertedFile.storeClusterEnhanceDIRTree(n.identifier);
@@ -1079,7 +1079,7 @@ public class RTreeEnhanced implements ISpatialIndex {
             return pseudoDoc;
         } else {
             invertedFile.create(n.identifier);
-            logger.info("processing index node: {}", n.identifier);
+            logger.debug("processing index node: {}", n.identifier);
 
             int child;
             for (child = 0; child < n.children; child++) {
@@ -1094,7 +1094,7 @@ public class RTreeEnhanced implements ISpatialIndex {
                     if (pseudoDoc.get(i).isEmpty())
                         continue;
                     invertedFile.addDocument(n.identifier, docID, pseudoDoc.get(i), i);
-                    logger.info("Adding inner DOC: nodeID: {}  docID: {}" , n.identifier, docID);
+                    logger.debug("Adding inner DOC: nodeID: {}  docID: {}" , n.identifier, docID);
                 }
             }
             ArrayList<ArrayList<WeightEntry>> pseudoDoc = invertedFile.storeClusterEnhanceDIRTree(n.identifier);

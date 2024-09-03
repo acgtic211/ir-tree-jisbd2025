@@ -67,9 +67,10 @@ public class AppMain {
 
     // Index Parameters
     static int fanout = 50; // Rtree fanout
-    static double betaArea = 0.9;   // DRtree betaArea
-    static int maxWord = 10000; // DRtree maxWord
+    static double betaArea = 0.9;   // RtreeEnhanced betaArea
+    static int maxWord = 10000; // RtreeEnhanced maxWord
     static int numClusters = 4; // CIRtree clusters
+    static int numMoves = 4; // KMean numMoves
 
     // Data sets
     //static String keywordsFilePath = "src/main/resources/data/keywords.txt";    // old words.txt
@@ -720,7 +721,7 @@ public class AppMain {
 
     public static void CalculateKMeanClusterInMemory() {
         logger.info("Creating cluster tree with Kmean medoids...");
-        clusterBTree = KMean.calculateKMean(weightIndex, 4, 4);
+        clusterBTree = KMean.calculateKMean(weightIndex, numClusters, numMoves);
         logger.info("Done");
     }
 

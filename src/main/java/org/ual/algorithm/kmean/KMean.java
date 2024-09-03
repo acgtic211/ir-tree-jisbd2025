@@ -57,8 +57,8 @@ public class KMean {
 			de.sumOfSquare = Math.sqrt(de.sumOfSquare);
 			docs.add(de);
 
-			if(count % 10000 == 0)
-				logger.info("Count: {}", count);
+//			if(count % 10000 == 0)
+//				logger.debug("Count: {}", count);
 			count++;
 		}
 
@@ -118,7 +118,8 @@ public class KMean {
 		printResults();
 
 		long end = System.currentTimeMillis();
-		logger.info("Time: {} minutes", (end - start)/1000.0/60);
+		//logger.info("Time: {} minutes", (end - start)/1000.0/60);
+		logger.info("Medoids and clustering done in: {} ms", (end - start));
 
 		//iteration
 		while(moves > MOVES) {
@@ -147,7 +148,8 @@ public class KMean {
 			printResults();
 
 			end = System.currentTimeMillis();
-			logger.info("Moves: {} Time: {} minutes", moves, (end - start)/1000.0/60);
+			//logger.info("Moves: {} Time: {} minutes", moves, (end - start)/1000.0/60);
+			logger.info("Moves: {} Time: {} ms", moves, (end - start));
 		}
 
 		logger.info("Final Results:");
@@ -156,7 +158,7 @@ public class KMean {
 		HashMap<Integer, Integer> tree = new HashMap<>();
 
 		for(int c = 0; c < assign.length; c++) {
-			logger.info("assign = {}", assign[c]);
+			logger.debug("assign = {}", assign[c]);
 			if(assign[c] == -1)
 				continue;
 			Integer res = tree.put(c, assign[c]);
@@ -165,6 +167,8 @@ public class KMean {
 				System.exit(-1);
 			}
 		}
+		logger.info("Total time: {} ms", (end - start));
+
 		return tree;
 	}
 

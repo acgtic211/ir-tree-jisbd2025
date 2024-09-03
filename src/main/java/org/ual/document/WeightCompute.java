@@ -33,6 +33,7 @@ public class WeightCompute {
         // Weights per term
         ArrayList<WeightEntry> wordWeights = new ArrayList<>();
 
+        long start = System.currentTimeMillis();
         try {
             LineNumberReader lr = new LineNumberReader(new FileReader(wordsFile));
             int totalLength = 0;
@@ -95,6 +96,8 @@ public class WeightCompute {
         } catch (Exception e) {
             logger.error("Error while operating with weight file.", e);
         }
+        long end = System.currentTimeMillis();
+        logger.info("Weight processing done in: {} ms", (end - start));
     }
 
 
@@ -117,10 +120,13 @@ public class WeightCompute {
         // Weights per term
         ArrayList<WeightEntry> wordWeights = new ArrayList<>();
 
+
         try {
             LineNumberReader lr = new LineNumberReader(new FileReader(wordsFile));
             int totalLength = 0;
             double maxWeight = 0;
+
+            long start = System.currentTimeMillis();
 
             String line = lr.readLine();    // 0,1,2,3,4,5
             while (line != null) {
@@ -170,15 +176,18 @@ public class WeightCompute {
                     maxWeight = Math.max(maxWeight, weight);
                 }
                 buf = buf.substring(0, buf.length() - 1);
-                logger.info("WordID: {}, Weight: {}", wordID, buf);
+                logger.debug("WordID: {}, Weight: {}", wordID, buf);
                 //System.out.println(wordID + "," + buf);
 
                 weightList.add(new Weight(Integer.parseInt(wordID), wordWeights));
                 wordWeights.clear();
             }
+            long end = System.currentTimeMillis();
+            logger.info("Weight processing done in: {} ms", (end - start));
         } catch (Exception e) {
             logger.error("Error while operating with weight file.", e);
         }
+
     }
 
 }

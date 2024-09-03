@@ -72,8 +72,8 @@ public class BuildRTree {
 
             tree.insertData(null, r, id);
 
-            if ((count % 1000) == 0)
-                logger.info("Count: {}", count);
+//            if ((count % 1000) == 0)
+//                logger.debug("Count: {}", count);
 
             count++;
         }
@@ -82,14 +82,14 @@ public class BuildRTree {
         logger.info("Operations: {}", count);
         logger.info("Tree: {}", tree);
         //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
-        logger.info("Time: {} ms", (end - start));
+        logger.info("Rtree build time: {} ms", (end - start));
 
         // since we created a new RTree, the PropertySet that was used to initialize the structure
         // now contains the IndexIdentifier property, which can be used later to reuse the index.
         // (Remember that multiple indices may reside in the same storage manager at the same time
         // and every one is accessed using its unique IndexIdentifier).
         Integer indexID = (Integer) ps2.getProperty("IndexIdentifier");
-        logger.info("Index ID: {}", indexID);
+        logger.debug("Index ID: {}", indexID);
 
         boolean ret = tree.isIndexValid();
         if (!ret)

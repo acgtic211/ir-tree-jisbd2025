@@ -29,7 +29,7 @@ public class BuildCDIRTree {
         long end = System.currentTimeMillis();
 
         //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
-        logger.info("Time: {} ms", (end - start));
+        logger.info("CDIRtree build in: {} ms", (end - start));
 
         boolean ret = tree.isIndexValid();
         if (!ret)

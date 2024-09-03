@@ -1044,17 +1044,17 @@ public class RTree implements ISpatialIndex {
 
                 ArrayList<WeightEntry> document = ds.read(docID).weights;
                 if (document == null) {
-                    System.out.println("Couldn't find document " + docID);
+                    logger.error("Couldn't find document {}", docID);
                     System.exit(-1);
                 }
 
                 Integer var = clusterTree.get(docID);
                 if (var == null) {
-                    System.out.println("Couldn't find cluster " + docID);
+                    logger.error("Couldn't find cluster for {}", docID);
                     System.exit(-1);
                 }
                 int cluster = var;
-                System.out.println("Adding DOC: " + "nodeID: " + n.identifier + " docID: " + docID + " DOC: " + document + " Cluster: " + cluster);
+                logger.debug("Adding DOC => nodeID: {} docID: {} DOC: {} Cluster: {}", n.identifier, docID, document, cluster);
                 invertedFile.addDocument(n.identifier, docID, document, cluster);
             }
             ArrayList<ArrayList<WeightEntry>> pseudoDoc = invertedFile.storeClusterEnhance(n.identifier);
@@ -1062,7 +1062,6 @@ public class RTree implements ISpatialIndex {
             return pseudoDoc;
         } else {
             invertedFile.create(n.identifier);
-            //System.out.println("processing index node " + n.identifier);
             logger.debug("Processing index node: {}", n.identifier);
 
             int child;
@@ -1073,7 +1072,7 @@ public class RTree implements ISpatialIndex {
                 int docID = n.identifiers[child];
 
                 if (pseudoDoc == null) {
-                    System.out.println("Couldn't find document " + docID);
+                    logger.error("Couldn't find document {}", docID);
                     System.exit(-1);
 
                 }
@@ -1082,7 +1081,6 @@ public class RTree implements ISpatialIndex {
                     if (pseudoDoc.get(i).isEmpty())
                         continue;
                     invertedFile.addDocument(n.identifier, docID, pseudoDoc.get(i), i);
-                    //System.out.println("Adding inner DOC: " + "nodeID: " + n.identifier + " docID: ");
                     logger.debug("Adding inner DOC: {} - NodeID: {}", docID, n.identifier);
                 }
             }
