@@ -24,6 +24,8 @@ import org.ual.spatiotextualindex.irtree.IRTree;
 import org.ual.utils.*;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
@@ -86,7 +88,8 @@ public class AppMain {
     // Results and Temp paths
     static String tempDirectoryPath = "src/main/resources/temp/";
     static String resultsDirectoryPath = "src/main/resources/results/";
-
+    static String metricsDirectoryPath = "src/main/resources/results/metrics/";
+    static String logDirectoryPath = "src/main/resources/log/";
 
     // NEW MEMORY VARIABLES
     static List<Weight> weights = new ArrayList<>();
@@ -117,6 +120,9 @@ public class AppMain {
         // ****************************************************** //
         //                    CLEANING DATA                       //
         // ****************************************************** //
+
+        // Create directories (log, temp and results) if not present
+        CreateDirectoryTree();
 
         // Clear old indexes from temp directory
         ClearTempDirectory();
@@ -631,9 +637,25 @@ public class AppMain {
         return write;
     }
 
+
+
     //******************************************************************//
     //                         UTILITY METHODS                          //
     //******************************************************************//
+
+    public static void CreateDirectoryTree() {
+        // Create directories if not present
+        try {
+            logger.info("Creating directory tree in resources...");
+            Files.createDirectories(Paths.get(metricsDirectoryPath));
+            Files.createDirectories(Paths.get(tempDirectoryPath));
+            Files.createDirectories(Paths.get(logDirectoryPath));
+            logger.info("Done");
+        } catch (IOException e) {
+            logger.error("Fail to create directories", e);
+            throw new RuntimeException(e);
+        }
+    }
 
     public static void ClearTempDirectory() {
         // Delete old temp files
@@ -1560,7 +1582,7 @@ public class AppMain {
         String fileName = "[" + globalQueryResults.queryType + "]" + paramName; // [Aggregate] alpha
 
         // CPU
-        try (FileWriter fw = new FileWriter(resultsDirectoryPath + "cpu" + "/" + fileName + "-CPU.dat", true);
+        try (FileWriter fw = new FileWriter(metricsDirectoryPath + fileName + "-CPU.dat", true);
             BufferedWriter bw = new BufferedWriter(fw);
             PrintWriter out = new PrintWriter(bw)) {
             for(ResultQueryParameter resultData : resultsByParam) {
