@@ -353,7 +353,7 @@ public class InvertedFile {
                 if(!filter.containsKey(ple.documentId)) {
                     filter.put(ple.documentId, 1);
                 } else {
-                    int count = ple.documentId;
+                    int count = filter.get(ple.documentId);
                     count++;
                     filter.put(ple.documentId, count);
                 }
