@@ -13,20 +13,20 @@ public interface Parameters {
     // final double longitudeEnd = -81;
 
     /**
-     *  Hotel set (hotel_doc - hotel_loc)
+     *  Hotel set (hotel_doc - hotel_loc) objs: 20676 keywords: 58821
      */
-    // final double latitudeStart = 19;
-    // final double latitudeEnd = 70;
-    // final double longitudeStart = -100;
-    // final double longitudeEnd = -99;
-    // final int uniqueKeywords = 602;
+//     final double latitudeStart = 19;
+//     final double latitudeEnd = 70;
+//     final double longitudeStart = -100;
+//     final double longitudeEnd = -99;
+//     final int uniqueKeywords = 600;
 
     /**
      *  ICDE 19 - Real set (icde19_real_doc - icde19_real_loc)
      */
     final double latitudeStart = 41;
     final double latitudeEnd = 49;
-    final double longitudeStart = 72;
+    final double longitudeStart = 81;//72
     final double longitudeEnd = 100;
 
     final int uniqueKeywords = 36;
