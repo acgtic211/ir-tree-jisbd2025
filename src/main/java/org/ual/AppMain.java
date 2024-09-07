@@ -30,6 +30,7 @@ import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ual.utils.io.QueryResultWriter;
 
 /**
  *
@@ -105,7 +106,8 @@ public class AppMain {
     static final int NUMBER_OF_QUERIES = 20;
 
     static List<Long> memTimes = new ArrayList<>();
-    static boolean writeDebugQueryResults = true;  // Writes query results to disk for debug (CAUTION IMPACT PERFORMANCE)
+    static boolean writeDebugQueryResults = true;  // Writes query results to disk for debug
+    static String currentQueryParam = ""; // Hold the current parameter name in use
 
     private static final Logger logger = LogManager.getLogger(AppMain.class);
 
@@ -176,146 +178,151 @@ public class AppMain {
         //                       QUERIES                          //
         // ****************************************************** //
 
-        // Launch Query Selector Menu
-        String querySelection = launchQuerySelectorMenu();
-        logger.info("Selected Spatial Query type: {}", querySelection);
+        // TODO TEMP CHANGE TO DO CONSECUTIVE QUERIES
+        do {
+            // Launch Query Selector Menu
+            String querySelection = launchQuerySelectorMenu();
+            logger.info("Selected Spatial Query type: {}", querySelection);
 
 
-        // ****************************************************** //
-        //                      AGGREGATE                         //
-        // ****************************************************** //
+            // ****************************************************** //
+            //                      AGGREGATE                         //
+            // ****************************************************** //
 
-        if (Objects.equals(querySelection, "AGGREGATE")) {
-            // Launch Aggregator Menu
-            aggregator = launchAggregateMenu();
-            logger.info("Using aggregator: {}", aggregator);
+            if (Objects.equals(querySelection, "AGGREGATE")) {
+                // Launch Aggregator Menu
+                aggregator = launchAggregateMenu();
+                logger.info("Using aggregator: {}", aggregator);
 
 
-            // Query generation and evaluation
-            // Result set
-            globalQueryResults = new ResultQueryTotal("Aggregate");
+                // Query generation and evaluation
+                // Result set
+                globalQueryResults = new ResultQueryTotal("Aggregate");
 
-            // Launch Query Menu
-            String queryType = launchAggregateQueryTypeMenu();
-            logger.info("Processing query type: {}", queryType);
+                // Launch Query Menu
+                String queryType = launchAggregateQueryTypeMenu();
+                logger.info("Processing query type: {}", queryType);
 
-            if(queryType.equals("GroupSize")) {
-                ProcessAggregateGroupSizeQuery(aggregator);
-            } else if (queryType.equals("PercentQuery")) {
-                ProcessAggregatePercentageQuery(aggregator);
-            } else if (queryType.equals("NumKeywords")) {
-                ProcessAggregateNumKeywordsQuery(aggregator);
-            } else if (queryType.equals("SpaceAreaPercentage")) {
-                ProcessAggregateSpaceAreaPercentQuery(aggregator);
-            } else if (queryType.equals("KeywordSpaceSizePercentage")) {
-                ProcessAggregateKeywordSpaceSizePercentQuery(aggregator);
-            } else if (queryType.equals("TopK")) {
-                ProcessAggregateTopKQuery(aggregator);
-            } else if (queryType.equals("Alpha")) {
-                ProcessAggregateAlphaQuery(aggregator);
-            } else if (queryType.equals("All")) {
-                ProcessAggregateGroupSizeQuery(aggregator);
-                ProcessAggregatePercentageQuery(aggregator);
-                ProcessAggregateNumKeywordsQuery(aggregator);
-                ProcessAggregateSpaceAreaPercentQuery(aggregator);
-                ProcessAggregateKeywordSpaceSizePercentQuery(aggregator);
-                ProcessAggregateTopKQuery(aggregator);
-                ProcessAggregateAlphaQuery(aggregator);
-            } else {
-                logger.info("Exiting...");
-                System.exit(0);
+                if (queryType.equals("GroupSize")) {
+                    ProcessAggregateGroupSizeQuery(aggregator);
+                } else if (queryType.equals("PercentQuery")) {
+                    ProcessAggregatePercentageQuery(aggregator);
+                } else if (queryType.equals("NumKeywords")) {
+                    ProcessAggregateNumKeywordsQuery(aggregator);
+                } else if (queryType.equals("SpaceAreaPercentage")) {
+                    ProcessAggregateSpaceAreaPercentQuery(aggregator);
+                } else if (queryType.equals("KeywordSpaceSizePercentage")) {
+                    ProcessAggregateKeywordSpaceSizePercentQuery(aggregator);
+                } else if (queryType.equals("TopK")) {
+                    ProcessAggregateTopKQuery(aggregator);
+                } else if (queryType.equals("Alpha")) {
+                    ProcessAggregateAlphaQuery(aggregator);
+                } else if (queryType.equals("All")) {
+                    ProcessAggregateGroupSizeQuery(aggregator);
+                    ProcessAggregatePercentageQuery(aggregator);
+                    ProcessAggregateNumKeywordsQuery(aggregator);
+                    ProcessAggregateSpaceAreaPercentQuery(aggregator);
+                    ProcessAggregateKeywordSpaceSizePercentQuery(aggregator);
+                    ProcessAggregateTopKQuery(aggregator);
+                    ProcessAggregateAlphaQuery(aggregator);
+                } else {
+                    logger.info("Exiting...");
+                    System.exit(0);
+                }
             }
-        }
 
-        // ****************************************************** //
-        //                         RANGE                          //
-        // ****************************************************** //
+            // ****************************************************** //
+            //                         RANGE                          //
+            // ****************************************************** //
 
-        if(Objects.equals(querySelection, "RANGE")) {
-            // Query generation and evaluation
-            // Result set
-            globalQueryResults = new ResultQueryTotal("Range");
+            if (Objects.equals(querySelection, "RANGE")) {
+                // Query generation and evaluation
+                // Result set
+                globalQueryResults = new ResultQueryTotal("Range");
 
-            // Launch Query Menu
-            String queryType = launchRangeQueryTypeMenu();
-            logger.info("Processing query type: {}", queryType);
+                // Launch Query Menu
+                String queryType = launchRangeQueryTypeMenu();
+                logger.info("Processing query type: {}", queryType);
 
-            if (queryType.equals("NumKeywords")) {
-                ProcessRangeNumKeywordsQuery();
-            } else if (queryType.equals("SpaceAreaPercentage")) {
-                ProcessRangeSpaceAreaPercentQuery();
-            } else if (queryType.equals("KeywordSpaceSizePercentage")) {
-                ProcessRangeKeywordSpaceSizePercentQuery();
-            } else if (queryType.equals("Range")) {
-                ProcessRangeRadiusQuery();
-            } else if (queryType.equals("Alpha")) {
-                ProcessRangeAlphaQuery();
-            } else if (queryType.equals("All")) {
-                ProcessRangeNumKeywordsQuery();
-                ProcessRangeSpaceAreaPercentQuery();
-                ProcessRangeKeywordSpaceSizePercentQuery();
-                ProcessRangeRadiusQuery();
-                ProcessRangeAlphaQuery();
-            } else {
-                logger.info("Exiting...");
-                System.exit(0);
+                if (queryType.equals("NumKeywords")) {
+                    ProcessRangeNumKeywordsQuery();
+                } else if (queryType.equals("SpaceAreaPercentage")) {
+                    ProcessRangeSpaceAreaPercentQuery();
+                } else if (queryType.equals("KeywordSpaceSizePercentage")) {
+                    ProcessRangeKeywordSpaceSizePercentQuery();
+                } else if (queryType.equals("Range")) {
+                    ProcessRangeRadiusQuery();
+                } else if (queryType.equals("Alpha")) {
+                    ProcessRangeAlphaQuery();
+                } else if (queryType.equals("All")) {
+                    ProcessRangeNumKeywordsQuery();
+                    ProcessRangeSpaceAreaPercentQuery();
+                    ProcessRangeKeywordSpaceSizePercentQuery();
+                    ProcessRangeRadiusQuery();
+                    ProcessRangeAlphaQuery();
+                } else {
+                    logger.info("Exiting...");
+                    System.exit(0);
+                }
             }
-        }
 
-        // ****************************************************** //
-        //                         KNN                            //
-        // ****************************************************** //
+            // ****************************************************** //
+            //                         KNN                            //
+            // ****************************************************** //
 
-        if(Objects.equals(querySelection, "KNN")) {
-            // Query generation and evaluation
-            // Result set
-            globalQueryResults = new ResultQueryTotal("KNN");
+            if (Objects.equals(querySelection, "KNN")) {
+                // Query generation and evaluation
+                // Result set
+                globalQueryResults = new ResultQueryTotal("KNN");
 
-            // Launch Query Menu
-            String queryType = launchKnnQueryTypeMenu();
-            logger.info("Processing query type: {}", queryType);
+                // Launch Query Menu
+                String queryType = launchKnnQueryTypeMenu();
+                logger.info("Processing query type: {}", queryType);
 
-            if (queryType.equals("NumKeywords")) {
-                ProcessKNNNumKeywordsQuery();
-            } else if (queryType.equals("SpaceAreaPercentage")) {
-                ProcessKNNSpaceAreaPercentQuery();
-            } else if (queryType.equals("KeywordSpaceSizePercentage")) {
-                ProcessKNNKeywordSpaceSizePercentQuery();
-            } else if (queryType.equals("TopK")) {
-                ProcessKNNTopKQuery();
-            } else if (queryType.equals("Alpha")) {
-                ProcessKNNAlphaQuery();
-            } else if (queryType.equals("All")) {
-                ProcessKNNNumKeywordsQuery();
-                ProcessKNNSpaceAreaPercentQuery();
-                ProcessKNNKeywordSpaceSizePercentQuery();
-                ProcessKNNTopKQuery();
-                ProcessKNNAlphaQuery();
-            } else {
-                logger.info("Exiting...");
-                System.exit(0);
+                if (queryType.equals("NumKeywords")) {
+                    ProcessKNNNumKeywordsQuery();
+                } else if (queryType.equals("SpaceAreaPercentage")) {
+                    ProcessKNNSpaceAreaPercentQuery();
+                } else if (queryType.equals("KeywordSpaceSizePercentage")) {
+                    ProcessKNNKeywordSpaceSizePercentQuery();
+                } else if (queryType.equals("TopK")) {
+                    ProcessKNNTopKQuery();
+                } else if (queryType.equals("Alpha")) {
+                    ProcessKNNAlphaQuery();
+                } else if (queryType.equals("All")) {
+                    ProcessKNNNumKeywordsQuery();
+                    ProcessKNNSpaceAreaPercentQuery();
+                    ProcessKNNKeywordSpaceSizePercentQuery();
+                    ProcessKNNTopKQuery();
+                    ProcessKNNAlphaQuery();
+                } else {
+                    logger.info("Exiting...");
+                    System.exit(0);
+                }
             }
-        }
 
 
-        logger.info("---------------------------------");
-        logger.info(" All queries have been evaluated ");
-        logger.info("---------------------------------");
+            logger.info("---------------------------------");
+            logger.info(" All queries have been evaluated ");
+            logger.info("---------------------------------");
 
-        logger.info("Query Times:");
-        for(long time:memTimes)
-            logger.info("{} ms", time);
+            logger.info("Query Times:");
+            for (long time : memTimes)
+                logger.info("{} ms", time);
 
 
-        // Write Data
-        boolean writeResult = launchWriteResultMenu();
-        if (writeResult) {
-            logger.info("Writing results in disk ...");
-            writeResults();
-            //writeResults(memResults, "[MEM]");
-        } else {
-            logger.info("Discarding Results ...");
-        }
+            // Write Data
+            boolean writeResult = launchWriteResultMenu();
+            if (writeResult) {
+                logger.info("Writing results in disk ...");
+                writeResults();
+                //writeResults(memResults, "[MEM]");
+            } else {
+                logger.info("Discarding Results ...");
+                break; // TODO DELETE
+            }
+
+        }while(true);
 
         logger.info("Exiting...");
     }
@@ -780,6 +787,8 @@ public class AppMain {
     public static void ProcessAggregateGroupSizeQuery(String aggregator) throws Exception {
         // Query evaluation
         logger.info("Evaluating based on Group Size...");
+        currentQueryParam = "Group Size";
+
         long startTime = System.currentTimeMillis();
         for(int n : ns){
             ArrayList<ResultQueryCost> results = evaluateAggregateQueries(n, mPercentageDefault, numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -795,6 +804,8 @@ public class AppMain {
     public static void ProcessAggregatePercentageQuery(String aggregator) throws Exception {
         // Percentage
         logger.info("Evaluating based on Percentage...");
+        currentQueryParam = "Percentage";
+
         long startTime = System.currentTimeMillis();
         for(int percentage : mPercentages) {
             ArrayList<ResultQueryCost> results = evaluateAggregateQueries(nDefault, percentage, numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -810,6 +821,8 @@ public class AppMain {
     public static void ProcessAggregateNumKeywordsQuery(String aggregator) throws Exception {
         // Number of Keywords
         logger.info("Evaluating based on Number of Keywords...");
+        currentQueryParam = "Number of Keywords";
+
         long startTime = System.currentTimeMillis();
         for(int numberOfKeyword : numberOfKeywords){
             ArrayList<ResultQueryCost> results = evaluateAggregateQueries(nDefault, mPercentageDefault, numberOfKeyword, querySpaceAreaPercentageDefault,
@@ -825,6 +838,8 @@ public class AppMain {
     public static void ProcessAggregateSpaceAreaPercentQuery(String aggregator) throws Exception {
         // Query Space Area Percentage
         logger.info("Evaluating based on Query Space Area Percentage...");
+        currentQueryParam = "Query Space Area Percentage";
+
         long startTime = System.currentTimeMillis();
         for(double querySpaceAreaPercentage : querySpaceAreaPercentages){
             ArrayList<ResultQueryCost> results = evaluateAggregateQueries(nDefault, mPercentageDefault, numberOfKeywordsDefault, querySpaceAreaPercentage,
@@ -840,6 +855,8 @@ public class AppMain {
     public static void ProcessAggregateKeywordSpaceSizePercentQuery(String aggregator) throws Exception {
         // Keyword Space Size Percentage
         logger.info("Evaluating based on Keyword Space Size Percentage...");
+        currentQueryParam = "Keyword Space Size Percentage";
+
         long startTime = System.currentTimeMillis();
         for(double keywordSpaceSizePercentage : keywordSpaceSizePercentages){
             ArrayList<ResultQueryCost> results = evaluateAggregateQueries(nDefault, mPercentageDefault, numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -855,6 +872,8 @@ public class AppMain {
     public static void ProcessAggregateTopKQuery(String aggregator) throws Exception {
         // Top K
         logger.info("Evaluating based on Top K...");
+        currentQueryParam = "Top K";
+
         long startTime = System.currentTimeMillis();
         for(int topk : topks){
             ArrayList<ResultQueryCost> results = evaluateAggregateQueries(nDefault, mPercentageDefault, numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -870,6 +889,8 @@ public class AppMain {
     public static void ProcessAggregateAlphaQuery(String aggregator) throws Exception {
         // Alpha
         logger.info("Evaluating based on Alpha...");
+        currentQueryParam = "Alphas";
+
         long startTime = System.currentTimeMillis();
         for(double alpha : alphas){
             ArrayList<ResultQueryCost> results = evaluateAggregateQueries(nDefault, mPercentageDefault, numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -889,6 +910,8 @@ public class AppMain {
     public static void ProcessRangeNumKeywordsQuery() throws Exception {
         // Number of Keywords
         logger.info("Evaluating based on Number of Keywords...");
+        currentQueryParam = "Number of Keywords";
+
         long startTime = System.currentTimeMillis();
         for(int numberOfKeyword : numberOfKeywords){
             ArrayList<ResultQueryCost> results = evaluateRangeQueries(numberOfKeyword, querySpaceAreaPercentageDefault,
@@ -904,6 +927,8 @@ public class AppMain {
     public static void ProcessRangeSpaceAreaPercentQuery() throws Exception {
         // Query Space Area Percentage
         logger.info("Evaluating based on Query Space Area Percentage...");
+        currentQueryParam = "Query Space Area Percentage";
+
         long startTime = System.currentTimeMillis();
         for(double querySpaceAreaPercentage : querySpaceAreaPercentages){
             ArrayList<ResultQueryCost> results = evaluateRangeQueries(numberOfKeywordsDefault, querySpaceAreaPercentage,
@@ -922,6 +947,8 @@ public class AppMain {
     public static void ProcessRangeKeywordSpaceSizePercentQuery() throws Exception {
         // Keyword Space Size Percentage
         logger.info("Evaluating based on Keyword Space Size Percentage...");
+        currentQueryParam = "Keyword Space Size Percentage";
+
         long startTime = System.currentTimeMillis();
         for(double keywordSpaceSizePercentage : keywordSpaceSizePercentages){
             ArrayList<ResultQueryCost> results = evaluateRangeQueries(numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -937,6 +964,8 @@ public class AppMain {
     public static void ProcessRangeAlphaQuery() throws Exception {
         // Alpha
         logger.info("Evaluating based on Alpha...");
+        currentQueryParam = "Alpha";
+
         long startTime = System.currentTimeMillis();
         for(double alpha : alphas){
             ArrayList<ResultQueryCost> results = evaluateRangeQueries(numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -950,8 +979,10 @@ public class AppMain {
     }
 
     public static void ProcessRangeRadiusQuery() throws Exception {
-        // Top K
+        // Radius
         logger.info("Evaluating based on Radius...");
+        currentQueryParam = "Radius";
+
         long startTime = System.currentTimeMillis();
         for(float radius : radius){
             ArrayList<ResultQueryCost> results = evaluateRangeQueries(numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -973,6 +1004,8 @@ public class AppMain {
     public static void ProcessKNNNumKeywordsQuery() throws Exception {
         // Number of Keywords
         logger.info("Evaluating based on Number of Keywords...");
+        currentQueryParam = "Number of Keywords";
+
         long startTime = System.currentTimeMillis();
         for(int numberOfKeyword : numberOfKeywords){
             ArrayList<ResultQueryCost> results = evaluateKNNQueries(numberOfKeyword, querySpaceAreaPercentageDefault,
@@ -989,6 +1022,8 @@ public class AppMain {
     public static void ProcessKNNSpaceAreaPercentQuery() throws Exception {
         // Query Space Area Percentage
         logger.info("Evaluating based on Query Space Area Percentage...");
+        currentQueryParam = "Query Space Area Percentage";
+
         long startTime = System.currentTimeMillis();
         for(double querySpaceAreaPercentage : querySpaceAreaPercentages){
             ArrayList<ResultQueryCost> results = evaluateKNNQueries(numberOfKeywordsDefault, querySpaceAreaPercentage,
@@ -1004,6 +1039,8 @@ public class AppMain {
     public static void ProcessKNNKeywordSpaceSizePercentQuery() throws Exception {
         // Keyword Space Size Percentage
         logger.info("Evaluating based on Keyword Space Size Percentage...");
+        currentQueryParam = "Keyword Space Size Percentage";
+
         long startTime = System.currentTimeMillis();
         for(double keywordSpaceSizePercentage : keywordSpaceSizePercentages){
             ArrayList<ResultQueryCost> results = evaluateKNNQueries(numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -1019,6 +1056,8 @@ public class AppMain {
     public static void ProcessKNNTopKQuery() throws Exception {
         // Top K
         logger.info("Evaluating based on Top K...");
+        currentQueryParam = "Top K";
+
         long startTime = System.currentTimeMillis();
         for(int topk : topks){
             ArrayList<ResultQueryCost> results = evaluateKNNQueries(numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -1034,6 +1073,8 @@ public class AppMain {
     public static void ProcessKNNAlphaQuery() throws Exception {
         // Alpha
         logger.info("Evaluating based on Alpha...");
+        currentQueryParam = "Alpha";
+
         long startTime = System.currentTimeMillis();
         for(double alpha : alphas){
             ArrayList<ResultQueryCost> results = evaluateKNNQueries(numberOfKeywordsDefault, querySpaceAreaPercentageDefault,
@@ -1121,7 +1162,7 @@ public class AppMain {
 
         boolean printInConsole = false; // FIX GLOBAL VARIABLE
         long startTime = System.currentTimeMillis();
-        ResultWriter writer;
+        QueryResultWriter resultWriter = new QueryResultWriter();
 
         // Choose between Rtree and DRtree
         ISpatioTextualIndex tree;
@@ -1172,7 +1213,7 @@ public class AppMain {
         if (queryType == 0 || queryType == 1) {
             numberOfQueries = gnnkQueries.size();
             resultCost.queryName = prefix;  // TODO FIX
-            writer = new ResultWriter(gnnkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
+            //writer = new ResultWriter(gnnkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
 
             for (GNNKQuery q : gnnkQueries) {
                 List<GNNKQuery.Result> results;
@@ -1185,8 +1226,10 @@ public class AppMain {
                 }
 
                 if(writeDebugQueryResults) {
-                    writer.writeGNNKResult(results);
-                    writer.write("========================================");
+                    resultWriter.writeGNNKResult(results);
+                    resultWriter.write("========================================", true);
+                    //writer.writeGNNKResult(results);
+                    //writer.write("========================================");
                 }
 
                 totalCost += results.get(0).cost.totalCost;
@@ -1196,7 +1239,7 @@ public class AppMain {
         } else {
             numberOfQueries = sgnnkQueries.size();
             resultCost.queryName = prefix;  // TODO FIX
-            writer = new ResultWriter(sgnnkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
+            //writer = new ResultWriter(sgnnkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
 
             for (SGNNKQuery q : sgnnkQueries) {
                 // [4] SGNNK Extended
@@ -1208,8 +1251,10 @@ public class AppMain {
 
                     if(writeDebugQueryResults) {
                         for (Integer subgroupSize : subroupSizes) {
-                            writer.write("Size " + subgroupSize);
-                            writer.writeSGNNKResult(results.get(subgroupSize));
+                            resultWriter.write("Size " + subgroupSize, true);
+                            resultWriter.writeSGNNKResult(results.get(subgroupSize));
+                            //writer.write("Size " + subgroupSize);
+                            //writer.writeSGNNKResult(results.get(subgroupSize));
                         }
                     }
                 }
@@ -1219,10 +1264,12 @@ public class AppMain {
                     int holdSubGroupSize = q.subGroupSize;  // Fix for index out of bounds
                     while (q.subGroupSize <= q.groupSize) {
                         if(writeDebugQueryResults)
-                            writer.write("Size " + q.subGroupSize);
+                            resultWriter.write("Size " + q.subGroupSize, true);
+                            //writer.write("Size " + q.subGroupSize);
                         List<SGNNKQuery.Result> results = tree.sgnnk(invertedFile, q, topk);
                         if(writeDebugQueryResults)
-                            writer.writeSGNNKResult(results);
+                            resultWriter.writeSGNNKResult(results);
+                            //writer.writeSGNNKResult(results);
 
                         totalCost += results.get(0).cost.totalCost;
                         spatialCost += results.get(0).cost.spatialCost;
@@ -1250,10 +1297,12 @@ public class AppMain {
                     irCost += results.get(0).cost.irCost;
 
                     if(writeDebugQueryResults)
-                        writer.writeSGNNKResult(results);
+                        resultWriter.writeSGNNKResult(results);
+                        //writer.writeSGNNKResult(results);
                 }
                 if(writeDebugQueryResults)
-                    writer.write("========================================");
+                    resultWriter.write("========================================", true);
+                    //writer.write("========================================");
             }
         }
 
@@ -1269,16 +1318,20 @@ public class AppMain {
             averageSpatialCost /= 10;
 
         if(writeDebugQueryResults) {
-            writer.write(prefix + " Average nodes visited: " + averageNodesVisited);
-            writer.write(prefix + " Total time millisecond: " + totalTime);
+            resultWriter.write(prefix + " Average nodes visited: " + averageNodesVisited, true);
+            resultWriter.write(prefix + " Total time millisecond: " + totalTime, true);
+            resultWriter.writeToDisk(resultsDirectoryPath, prefix + currentQueryParam);
+            //writer.write(prefix + " Average nodes visited: " + averageNodesVisited);
+            //writer.write(prefix + " Total time millisecond: " + totalTime);
         }
-        writer.close();
+        //writer.close();
+
 
         logger.debug("Average time millisecond: {}", averageTime);
         logger.debug("Average total IO: {}", averageFileIO);
 //			System.out.println("Average tree IO: " + tree.getIO() * 1.0 / count);
 //			System.out.println("Average inverted index IO: " + ivIO * 1.0 / count);
-        logger.printf(Level.INFO,"[OP] avgT= %dms avgIO= %d avgSpatCost= %.6f avgIRCost= %.6f", averageTime, averageFileIO, averageSpatialCost, averageIRCost);
+        logger.printf(Level.INFO,"TotalTime= %dms avgT= %dms avgIO= %d avgSpatCost= %.6f avgIRCost= %.6f", totalTime, averageTime, averageFileIO, averageSpatialCost, averageIRCost);
 
         resultCost.totalTime = totalTime;
         resultCost.averageTime = averageTime;
@@ -1337,7 +1390,8 @@ public class AppMain {
 
         boolean printInConsole = false; // TODO FIX GLOBAL VARIABLE
         long startTime = System.currentTimeMillis();
-        ResultWriter writer;
+        //ResultWriter writer;
+        QueryResultWriter resultWriter = new QueryResultWriter();
 
         // Choose between Rtree and DRtree
         ISpatioTextualIndex tree;
@@ -1364,21 +1418,23 @@ public class AppMain {
             numberOfQueries = brQueries.size();
             prefix = "[BRQ]";
             resultCost.queryName = "BRQ";
-            writer = new ResultWriter(brQueries.size(), resultsDirectoryPath, printInConsole, prefix);
+            //writer = new ResultWriter(brQueries.size(), resultsDirectoryPath, printInConsole, prefix);
 
             for (BRQuery q : brQueries) {
                 List<BRQuery.Result> results;
                 results = tree.booleanRangeQuery(invertedFile, q, radius);
 
                 if(writeDebugQueryResults) {
-                    writer.writeBRQResult(results);
-                    writer.write("========================================");
+                    resultWriter.writeBRQResult(results);
+                    resultWriter.write("========================================", true);
+                    //writer.writeBRQResult(results);
+                    //writer.write("========================================");
                 }
             }
         } else {
             // New query types will be here
             resultCost.queryName = "???";
-            writer = new ResultWriter(brQueries.size(), resultsDirectoryPath, printInConsole, "[???]");
+            //writer = new ResultWriter(brQueries.size(), resultsDirectoryPath, printInConsole, "[???]");
         }
 
         long totalTime = System.currentTimeMillis() - startTime;
@@ -1393,16 +1449,19 @@ public class AppMain {
             averageSpatialCost /= 10;
 
         if(writeDebugQueryResults) {
-            writer.write(prefix + " Average nodes visited: " + averageNodesVisited);
-            writer.write(prefix + " Total time millisecond: " + totalTime);
+            resultWriter.write(prefix + " Average nodes visited: " + averageNodesVisited, true);
+            resultWriter.write(prefix + " Total time millisecond: " + totalTime, true);
+            resultWriter.writeToDisk(resultsDirectoryPath, prefix + currentQueryParam);
+            //writer.write(prefix + " Average nodes visited: " + averageNodesVisited);
+            //writer.write(prefix + " Total time millisecond: " + totalTime);
         }
-        writer.close();
+        //writer.close();
 
         logger.debug(prefix + " Average time millisecond: {}", averageTime);
         logger.debug(prefix + " Average total IO: {}", averageFileIO);
 //			System.out.println("Average tree IO: " + tree.getIO() * 1.0 / count);
 //			System.out.println("Average inverted index IO: " + ivIO * 1.0 / count);
-        logger.printf(Level.INFO,prefix + "[OP] avgT= %dms avgIO= %d avgSpatCost= %.6f avgIRCost= %.6f", averageTime, averageFileIO, averageSpatialCost, averageIRCost);
+        logger.printf(Level.INFO,prefix + "TotalTime= %dms avgT= %dms avgIO= %d avgSpatCost= %.6f avgIRCost= %.6f", totalTime, averageTime, averageFileIO, averageSpatialCost, averageIRCost);
 
         resultCost.totalTime = totalTime;
         resultCost.averageTime = averageTime;
@@ -1462,7 +1521,8 @@ public class AppMain {
 
         boolean printInConsole = false; // TODO FIX GLOBAL VARIABLE
         long startTime = System.currentTimeMillis();
-        ResultWriter writer;
+        //ResultWriter writer;
+        QueryResultWriter resultWriter = new QueryResultWriter();
 
         // Choose between Rtree and DRtree
         ISpatioTextualIndex tree;
@@ -1489,7 +1549,7 @@ public class AppMain {
             numberOfQueries = bkQueries.size();
             prefix = "[BKQ]";
             resultCost.queryName = "BKQ";
-            writer = new ResultWriter(bkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
+            //writer = new ResultWriter(bkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
 
             for (BooleanKnnQuery q : bkQueries) {
                 List<BooleanKnnQuery.Result> results = new ArrayList<>();
@@ -1497,8 +1557,10 @@ public class AppMain {
                 results = tree.booleanKnnQuery(invertedFile, q, topk);
 
                 if(writeDebugQueryResults) {
-                    writer.writeBKQResult(results);
-                    writer.write("========================================");
+                    resultWriter.writeBKQResult(results);
+                    resultWriter.write("========================================", true);
+                    //writer.writeBKQResult(results);
+                    //writer.write("========================================");
                 }
             }
         // (1) TopK
@@ -1506,15 +1568,17 @@ public class AppMain {
             numberOfQueries = topkQueries.size();
             prefix = "[TKQ]";
             resultCost.queryName = "TKQ";
-            writer = new ResultWriter(topkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
+            //writer = new ResultWriter(topkQueries.size(), resultsDirectoryPath, printInConsole, prefix);
 
             for (TopkKnnQuery q : topkQueries) {
                 List<TopkKnnQuery.Result> results;
                 results = tree.topkKnnQuery(invertedFile, q, topk);
 
                 if(writeDebugQueryResults) {
-                    writer.writeTKQResult(results);
-                    writer.write("========================================");
+                    resultWriter.writeTKQResult(results);
+                    resultWriter.write("========================================", true);
+                    //writer.writeTKQResult(results);
+                    //writer.write("========================================");
                 }
             }
         }
@@ -1531,16 +1595,19 @@ public class AppMain {
             averageSpatialCost /= 10;
 
         if(writeDebugQueryResults) {
-            writer.write(prefix + " Average nodes visited: " + averageNodesVisited);
-            writer.write(prefix + " Total time millisecond: " + totalTime);
+            resultWriter.write(prefix + " Average nodes visited: " + averageNodesVisited, true);
+            resultWriter.write(prefix + " Total time millisecond: " + totalTime, true);
+            resultWriter.writeToDisk(resultsDirectoryPath, prefix + currentQueryParam);
+            //writer.write(prefix + " Average nodes visited: " + averageNodesVisited);
+            //writer.write(prefix + " Total time millisecond: " + totalTime);
         }
-        writer.close();
+        //writer.close();
 
         logger.debug(prefix + " Average time millisecond: {}", averageTime);
         logger.debug(prefix + " Average total IO: {}", averageFileIO);
 //			System.out.println("Average tree IO: " + tree.getIO() * 1.0 / count);
 //			System.out.println("Average inverted index IO: " + ivIO * 1.0 / count);
-        logger.printf(Level.INFO,prefix + "[OP] avgT= %dms avgIO= %d avgSpatCost= %.6f avgIRCost= %.6f", averageTime, averageFileIO, averageSpatialCost, averageIRCost);
+        logger.printf(Level.INFO,prefix + "TotalTime= %dms avgT= %dms avgIO= %d avgSpatCost= %.6f avgIRCost= %.6f",totalTime, averageTime, averageFileIO, averageSpatialCost, averageIRCost);
 
 
         resultCost.totalTime = totalTime;

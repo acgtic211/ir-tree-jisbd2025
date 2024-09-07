@@ -46,7 +46,7 @@ public class ResultWriter {
     public void writeGNNKResult(List<GNNKQuery.Result> results) throws IOException {
         write("Query " + queryCount);
         for (GNNKQuery.Result result : results) {
-            write(String.format("%d %.3f", result.id, result.cost.totalCost));
+            write(String.format("ID: %d COST: %.3f", result.id, result.cost.totalCost));
         }
         queryCount++;
         write("");
