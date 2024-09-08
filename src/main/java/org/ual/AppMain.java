@@ -31,6 +31,7 @@ import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ual.utils.io.QueryResultWriter;
+import org.ual.utils.io.StatisticsResultWriter;
 
 /**
  *
@@ -106,7 +107,7 @@ public class AppMain {
     static final int NUMBER_OF_QUERIES = 20;
 
     static List<Long> memTimes = new ArrayList<>();
-    static boolean writeDebugQueryResults = true;  // Writes query results to disk for debug
+    static boolean writeDebugQueryResults = false;  // Writes query results to disk for debug
     static String currentQueryParam = ""; // Hold the current parameter name in use
 
     private static final Logger logger = LogManager.getLogger(AppMain.class);
@@ -311,7 +312,10 @@ public class AppMain {
                 logger.info("{} ms", time);
 
 
-            // Write Data
+            // Always write data stats
+            writeResults();
+            logger.info("Writing results in disk ...");
+
             boolean writeResult = launchWriteResultMenu();
             if (writeResult) {
                 logger.info("Writing results in disk ...");
@@ -616,12 +620,12 @@ public class AppMain {
         return oper;
     }
 
-
+    // TODO refactor to ask to continue running queries
     private static boolean launchWriteResultMenu() {
-        System.out.println("Write results to disk?");
+        System.out.println("Do another query?");
         System.out.println("-------------------------\n");
         System.out.println("\t 1  - Yes");
-        System.out.println("\t[2] - No");
+        System.out.println("\t 2 - No");
         System.out.println("-------------------------\n");
 
         // Start Simple Menu
@@ -1627,6 +1631,16 @@ public class AppMain {
     public static void writeResults() {
         logger.info("Writing Results...");
 
+        StatisticsResultWriter.writeCSV(globalQueryResults.groupSizes, "group-size", globalQueryResults.queryType, metricsDirectoryPath);
+        StatisticsResultWriter.writeCSV(globalQueryResults.percentages, "subgroup-size", globalQueryResults.queryType, metricsDirectoryPath);
+        StatisticsResultWriter.writeCSV(globalQueryResults.numKeywords, "number-of-keyword", globalQueryResults.queryType, metricsDirectoryPath);
+        StatisticsResultWriter.writeCSV(globalQueryResults.querySpaceAreas, "query-space-area", globalQueryResults.queryType, metricsDirectoryPath);
+        StatisticsResultWriter.writeCSV(globalQueryResults.keyboardSpaceSizes, "keyword-space-size", globalQueryResults.queryType, metricsDirectoryPath);
+        StatisticsResultWriter.writeCSV(globalQueryResults.topks, "topk", globalQueryResults.queryType, metricsDirectoryPath);
+        StatisticsResultWriter.writeCSV(globalQueryResults.radii, "range", globalQueryResults.queryType, metricsDirectoryPath);
+        StatisticsResultWriter.writeCSV(globalQueryResults.alphas, "alpha", globalQueryResults.queryType, metricsDirectoryPath);
+
+        //TODO Call new method StatisticsResultWriter.resultWriter
         resultWriter(globalQueryResults.groupSizes, "group-size");
         resultWriter(globalQueryResults.percentages,"subgroup-size");
         resultWriter(globalQueryResults.numKeywords, "number-of-keyword");
