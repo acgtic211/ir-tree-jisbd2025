@@ -11,13 +11,12 @@ import java.util.*;
 
 
 public class KMean {
-	public static int numOfClusters;	//number of clusters, lable begins with 0
+	private static int numOfClusters;	//number of clusters, lable begins with 0
 	//public static int numDocs = 162033;		//number of documents
-	public static int dimension;	//number of words in all documents
-	public static int MOVES;		    //stopping condition
-	public static MedoidEntry[] medoids; 
-	public static int[] assign;	//clustering result: each element in the array represents a document. The value of the element is the cluster label.
-	public static ArrayList<DocEntry> docs = new ArrayList<>();
+	private static int dimension;	//number of words in all documents
+	private static MedoidEntry[] medoids;
+	private static int[] assign;	//clustering result: each element in the array represents a document. The value of the element is the cluster label.
+	private static ArrayList<DocEntry> docs = new ArrayList<>();
 	private static final Logger logger = LogManager.getLogger(KMean.class);
 	private static final Random random = new Random(1);
 
@@ -32,16 +31,14 @@ public class KMean {
 	 */
 	public static HashMap<Integer, Integer> calculateKMean(IStore weights, int numClusters, int numMoves) {
 		numOfClusters = numClusters;
-		MOVES = numMoves;
 
-		int id, count = 0;
 		int maxid = -1;
 		int maxword = -1;
 
 		Iterator<Weight> iter = weights.iterator();
 		while (iter.hasNext()){
 			Weight we = iter.next();
-			id = we.wordId;
+			int id = we.wordId;
 			maxid = Math.max(maxid, id);
 			DocEntry de = new DocEntry(id, we.weights.size());
 
@@ -56,10 +53,6 @@ public class KMean {
 			}
 			de.sumOfSquare = Math.sqrt(de.sumOfSquare);
 			docs.add(de);
-
-//			if(count % 10000 == 0)
-//				logger.debug("Count: {}", count);
-			count++;
 		}
 
 		dimension = maxword + 1;
@@ -72,74 +65,23 @@ public class KMean {
 
 		long start = System.currentTimeMillis();
 
-		logger.info("Initial Medoids");
-
-		HashSet<Integer> hs = new HashSet<>();
-		for(int i = 0; i < numOfClusters; i++){
-			int pos;
-			do {
-				pos = random.nextInt(docs.size());
-			} while(hs.contains(pos));
-
-			hs.add(pos);
-			DocEntry de = docs.get(pos);
-			id = de.id;
-
-			medoids[i] = new MedoidEntry(id, dimension);
-			//medoids[i].cardinality = 1;
-
-			for(int j = 0; j < de.words.length; j++){
-				medoids[i].words[de.words[j].id] = de.words[j].weight;
-				medoids[i].sumOfSquare += Math.pow(de.words[j].weight, 2);;
-			}
-			medoids[i].sumOfSquare = Math.sqrt(medoids[i].sumOfSquare);
-			//medoids[i].show();
-			//assign[id] = i;
-		}
-
-		logger.info("Initial Clustering...");
-
-		for(int k = 0; k < docs.size(); k++){
-			DocEntry de = docs.get(k);
-
-			double dist = -1;
-			int cg = -1;
-			for(int i = 0; i < medoids.length; i++){
-				double d = cosDist(de, medoids[i]);
-
-				if(dist <= d){
-					dist = d;
-					cg = i;
-				}
-			}
-			assign[de.id] = cg;
-		}
+		initialMedoids();
+		initialClustering();
 		updateMedoid();
 		printResults();
 
 		long end = System.currentTimeMillis();
-		//logger.info("Time: {} minutes", (end - start)/1000.0/60);
 		logger.info("Medoids and clustering done in: {} ms", (end - start));
 
 		//iteration
-		while(moves > MOVES) {
-			//logger.info("moves: {} ", moves);
+		while(moves > numMoves) {
 			moves = 0;
 
 			start = System.currentTimeMillis();
 			//re-clustering
             for (DocEntry de : docs) {
-                double dist = -1;
-                int cg = -1;
-                for (int i = 0; i < medoids.length; i++) {
-                    double d = cosDist(de, medoids[i]);
-
-                    if (dist <= d) {
-                        dist = d;
-                        cg = i;
-                    }
-                }
-                if (cg != assign[de.id])
+				int cg = findMedoid(de);
+				if (cg != assign[de.id])
                     moves++;
 
                 assign[de.id] = cg;
@@ -148,7 +90,6 @@ public class KMean {
 			printResults();
 
 			end = System.currentTimeMillis();
-			//logger.info("Moves: {} Time: {} minutes", moves, (end - start)/1000.0/60);
 			logger.info("Moves: {} Time: {} ms", moves, (end - start));
 		}
 
@@ -172,13 +113,56 @@ public class KMean {
 		return tree;
 	}
 
+	private static void initialClustering() {
+		logger.info("Initial Clustering...");
+
+		for(DocEntry de : docs){
+			assign[de.id] = findMedoid(de);
+		}
+	}
+
+	private static int findMedoid(DocEntry de) {
+		double dist = -1;
+		int cg = -1;
+		for(int i = 0; i < medoids.length; i++){
+			double d = cosDist(de, medoids[i]);
+
+			if(dist <= d){
+				dist = d;
+				cg = i;
+			}
+		}
+		return cg;
+	}
+
+	private static void initialMedoids() {
+		logger.info("Initial Medoids");
+		HashSet<Integer> hs = new HashSet<>();
+		for(int i = 0; i < numOfClusters; i++){
+			int pos;
+			do {
+				pos = random.nextInt(docs.size());
+			} while(hs.contains(pos));
+
+			hs.add(pos);
+			DocEntry de = docs.get(pos);
+
+			medoids[i] = new MedoidEntry(de.id, dimension);
+			for(WordEntry word : de.words){
+				medoids[i].words[word.id] = word.weight;
+				medoids[i].sumOfSquare += Math.pow(word.weight, 2);
+			}
+			medoids[i].sumOfSquare = Math.sqrt(medoids[i].sumOfSquare);
+		}
+	}
+
 
 	public static double cosDist(DocEntry dd, MedoidEntry dm){
-		double dist = 0;
+		double dist;
 		double fz = 0;
-		
-		for(int j = 0; j < dd.words.length; j++) {
-			fz += dd.words[j].weight * dm.words[dd.words[j].id];
+
+		for(WordEntry word : dd.words) {
+			fz += word.weight * dm.words[word.id];
 		}
 		
 		dist = fz / (dd.sumOfSquare * dm.sumOfSquare);
@@ -186,50 +170,48 @@ public class KMean {
 	}
 	
 	public static void updateMedoid(){
-		
-		for(int i = 0; i < medoids.length; i++){
-			medoids[i].cardinality = 0;
-			medoids[i].sumOfSquare = 0;
-            Arrays.fill(medoids[i].words, 0.0);
-		}
-						
-		for(int i = 0; i < docs.size(); i++){
-			DocEntry de = docs.get(i);
-			int clusterLabel = assign[de.id];
-			medoids[clusterLabel].cardinality++;
-			for(int j = 0; j < de.words.length; j++){
-				medoids[clusterLabel].words[de.words[j].id] += de.words[j].weight;
-			}
-		}
-		
-		for(int i = 0; i < medoids.length; i++){
-			for(int j = 0; j < medoids[i].words.length; j++){
-				medoids[i].words[j] /= medoids[i].cardinality;
-				medoids[i].sumOfSquare += Math.pow(medoids[i].words[j], 2);
-			}
-			medoids[i].sumOfSquare = Math.sqrt(medoids[i].sumOfSquare);
-		}
+
+        for (MedoidEntry medoid : medoids) {
+            medoid.cardinality = 0;
+            medoid.sumOfSquare = 0;
+            Arrays.fill(medoid.words, 0.0);
+        }
+
+        for (DocEntry de : docs) {
+            int clusterLabel = assign[de.id];
+            medoids[clusterLabel].cardinality++;
+			for(WordEntry word : de.words) {
+				medoids[clusterLabel].words[word.id] += word.weight;
+            }
+        }
+
+        for (MedoidEntry medoid : medoids) {
+            for (int j = 0; j < medoid.words.length; j++) {
+                medoid.words[j] /= medoid.cardinality;
+                medoid.sumOfSquare += Math.pow(medoid.words[j], 2);
+            }
+            medoid.sumOfSquare = Math.sqrt(medoid.sumOfSquare);
+        }
 				
 	}
 	
 	public static void printResults() {
 		HashMap<Integer, Integer> counter = new HashMap<>();
         for (int j : assign) {
-            if (j == -1)
-                continue;
-            if (counter.containsKey(j)) {
-                int c = counter.get(j);
-                c++;
-                counter.put(j, c);
-            } else {
-                counter.put(j, 1);
-            }
+			if (j != -1) {
+				counter.merge(j, 1, Integer::sum);
+			}
         }
 
-        for (int m : counter.keySet()) {
-            int c = counter.get(m);
+        for (Map.Entry<Integer, Integer> entry : counter.entrySet()) {
+			int m = entry.getKey();
+            int c = entry.getValue();
 			logger.info("Medoid: {} - Members: {}", m, c);
         }
+	}
+
+	private KMean() {
+		throw new IllegalStateException("Utility class");
 	}
 	
 }
