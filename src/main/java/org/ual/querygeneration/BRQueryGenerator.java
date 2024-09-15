@@ -11,6 +11,7 @@ public class BRQueryGenerator extends QueryGenerator {
 
     public static List<BRQuery> generateBRQueries(int numberOfQueries, int numberOfKeywords, double querySpaceAreaPercentage,
                                                   double keywordSpaceSizePercentage) {
+        resetRandom();
         List<BRQuery> brQueries = new ArrayList<>();
 
         // Generate QueryID, Point(X, Y) and List<Int> Keywords

@@ -10,6 +10,7 @@ import java.util.List;
 public class TopKQueryGenerator extends QueryGenerator {
     public static List<TopkKnnQuery> generateTKQueries(int numberOfQueries, int numberOfKeywords, double querySpaceAreaPercentage,
                                                        double keywordSpaceSizePercentage) {
+        resetRandom();
         List<TopkKnnQuery> tkQueries = new ArrayList<>();
 
         // Generate QueryID, Point(X, Y) and List<Int> Keywords
@@ -27,7 +28,7 @@ public class TopKQueryGenerator extends QueryGenerator {
             int keywordSpaceSpan = (int) (Parameters.uniqueKeywords * keywordSpaceSizePercentage / 100);
             int keywordSpaceMiddle = RANDOM.nextInt(Parameters.uniqueKeywords - keywordSpaceSpan + 1);
 
-            double queryWeight = (double) 1.0;
+            double queryWeight = 1.0;
 
             Query query = createKWQuery(queryId, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
                     centroidLatitude, centroidLongtitude, latitudeSpan, longtitudeSpan);

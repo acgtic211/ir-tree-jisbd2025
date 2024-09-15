@@ -11,12 +11,15 @@ public class QueryGenerator {
     static final Random RANDOM = new Random(1);
     static int NUMBER_OF_QUERIES = 20;
 
+    static void resetRandom() {
+        RANDOM.setSeed(1);
+    }
+
     /**
      * Generate a query with keywords and weights
      */
-    static Query createKWQuery(int queryId, double queryWeight, int numberOfKeywords, int keywordSpaceMiddle, int keywordSpaceSpan,
+    protected static Query createKWQuery(int queryId, double queryWeight, int numberOfKeywords, int keywordSpaceMiddle, int keywordSpaceSpan,
                              double centroidLatitude, double centroidLongtitude, double latitudeSpan, double longtitudeSpan) {
-        List<Query> queries = new ArrayList<>();
 
         double x = (centroidLatitude - latitudeSpan / 2) + RANDOM.nextDouble() * latitudeSpan;
         double y = (centroidLongtitude - longtitudeSpan / 2) + RANDOM.nextDouble() * longtitudeSpan;
@@ -48,7 +51,7 @@ public class QueryGenerator {
     /**
      * Generate a keyword only query, without weights
      */
-    static Query createTopKQuery(int queryId, int numberOfKeywords, int keywordSpaceMiddle, int keywordSpaceSpan,
+    protected static Query createTopKQuery(int queryId, int numberOfKeywords, int keywordSpaceMiddle, int keywordSpaceSpan,
                                 double centroidLatitude, double centroidLongtitude, double latitudeSpan, double longtitudeSpan) {
 
         double x = (centroidLatitude - latitudeSpan / 2) + RANDOM.nextDouble() * latitudeSpan;

@@ -14,6 +14,7 @@ public class GNNKQueryGenerator extends QueryGenerator {
     public static List<GNNKQuery> generateGNNKQuery(int numberOfGNNKQueries,
                                                     int groupSize, int numberOfKeywords, double querySpaceAreaPercentage,
                                                     double keywordSpaceSizePercentage, String aggregatorName) {
+        resetRandom();
         List<GNNKQuery> gnnkQueries = new ArrayList<>();
 
         // Calculate QueryID, Weight, X, Y, List<Int> Keywords, List<Double> KeyWeights
@@ -38,20 +39,17 @@ public class GNNKQueryGenerator extends QueryGenerator {
 
             int[] queryWeights = new int[groupSize];
             double queryWeightSum = 0;
-            //double queryWeight = 1; //+ RANDOM.nextInt(Integer.MAX_VALUE / numberOfQueries);
 
             for (int i = 0; i < queryWeights.length; i++) {
                 queryWeights[i] = 1; //+ RANDOM.nextInt(Integer.MAX_VALUE / numberOfQueries);
                 queryWeightSum += queryWeights[i];
             }
 
-            for (int i = 0; i < groupSize; i++) {
-                int queryId = i;
-                double queryWeight = (double) queryWeights[i] / queryWeightSum * groupSize;
+            for (int i = 0; i < queryWeights.length; i++) {
+                double queryWeight = queryWeights[i] / queryWeightSum * groupSize;
 
                 // TODO FIX RANDOMIZER DISCREPANCY
-                // Call parent class method to create query
-                queries.add(createKWQuery(queryId, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
+                queries.add(createKWQuery(i, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
                         centroidLatitude, centroidLongtitude, latitudeSpan, longtitudeSpan));
             }
 

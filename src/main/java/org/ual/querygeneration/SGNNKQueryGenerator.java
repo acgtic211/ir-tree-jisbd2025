@@ -14,25 +14,21 @@ public class SGNNKQueryGenerator extends QueryGenerator {
     public static List<SGNNKQuery> generateSGNNKQuery(int numberOfSGNNKQueries, int groupSize, double subgroupSize,
                                                       int numberOfKeywords, double querySpaceAreaPercentage,
                                                       double keywordSpaceSizePercentage, String aggregatorName) {
-
+        resetRandom();
         List<SGNNKQuery> sgnnkQueries = new ArrayList<>();
-        //int subGroup = (int) (groupSize * subgroupSize / 100);
+        int subGroup = (int) (groupSize * subgroupSize / 100);
 
         // Calculate QueryID, Weight, X, Y, List<Int> Keywords, List<Double> KeyWeights
         for (int sgnnk = 0; sgnnk < numberOfSGNNKQueries; sgnnk++) {
-            // Aggregator name
-            // Group size
-            // Subgroup size
-            int subGroup = (int) (groupSize * subgroupSize / 100);
 
             double latitudeSpan = (Parameters.latitudeEnd - Parameters.latitudeStart)
                     * Math.sqrt(querySpaceAreaPercentage / 100);
-            double longtitudeSpan = (Parameters.longitudeEnd - Parameters.longitudeStart)
+            double longitudeSpan = (Parameters.longitudeEnd - Parameters.longitudeStart)
                     * Math.sqrt(querySpaceAreaPercentage / 100);
 
             double centroidLatitude = Parameters.latitudeStart +
                     RANDOM.nextDouble() * (Parameters.latitudeEnd - Parameters.latitudeStart);
-            double centroidLongtitude = Parameters.longitudeStart +
+            double centroidLongitude = Parameters.longitudeStart +
                     RANDOM.nextDouble() * (Parameters.longitudeEnd - Parameters.longitudeStart);
 
             int keywordSpaceSpan = (int) (Parameters.uniqueKeywords * keywordSpaceSizePercentage / 100);
@@ -44,18 +40,17 @@ public class SGNNKQueryGenerator extends QueryGenerator {
             int[] queryWeights = new int[groupSize];
             double queryWeightSum = 0;
 
-            for (int i = 0; i < groupSize; i++) {
+            for (int i = 0; i < queryWeights.length; i++) {
                 queryWeights[i] = 1; //+ RANDOM.nextInt(Integer.MAX_VALUE / numberOfQueries);
                 queryWeightSum += queryWeights[i];
             }
 
-            for (int i = 0; i < groupSize; i++) {
-                int queryId = i;
-                double queryWeight = (double) queryWeights[i] / queryWeightSum * groupSize;
+            for (int i = 0; i < queryWeights.length; i++) {
+                double queryWeight = queryWeights[i] / queryWeightSum * groupSize;
 
                 // TODO FIX RANDOMIZER DISCREPANCY
-                queries.add(createKWQuery(queryId, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
-                        centroidLatitude, centroidLongtitude, latitudeSpan, longtitudeSpan));
+                queries.add(createKWQuery(i, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
+                        centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan));
             }
 
             IAggregator aggregator = AggregatorFactory.getAggregator(aggregatorName);
