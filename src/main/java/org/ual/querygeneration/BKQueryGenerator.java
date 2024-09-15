@@ -10,6 +10,7 @@ import java.util.List;
 public class BKQueryGenerator extends QueryGenerator {
     public static List<BooleanKnnQuery> generateBKQueries(int numberOfQueries, int numberOfKeywords, double querySpaceAreaPercentage,
                                                           double keywordSpaceSizePercentage) {
+        resetRandom();
         List<BooleanKnnQuery> bkQueries = new ArrayList<>();
 
         // Generate QueryID, Point(X, Y) and List<Int> Keywords
