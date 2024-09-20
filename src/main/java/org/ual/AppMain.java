@@ -39,7 +39,8 @@ import org.ual.utils.io.StatisticsResultWriter;
  */
 public class AppMain {
     // Query Parameters
-    static int[] aggregateQueryTypes = {5, 4, 3, 2, 1, 0}; // GNNK & SGNNK variants
+    //static int[] aggregateQueryTypes = {5, 4, 3, 2, 1, 0}; // GNNK & SGNNK variants
+    static int[] aggregateQueryTypes = {2, 0}; // GNNK & SGNNK variants
     static int[] rangeQueryTypes = {0}; // BRQ
     static int[] knnQueryTypes = {1, 0}; // BkQ & TkQ
     static int[] joinQueryTypes = {}; // Soon...
@@ -54,23 +55,21 @@ public class AppMain {
     static int[] keywordSpaceSizePercentages = {1, 2, 3, 4, 5};
     static int keywordSpaceSizePercentageDefault = 3;
     static int[] topks = {1, 10, 20, 30, 40, 50};
+    //static int[] topks = {1, 10, 100, 200, 400, 600, 800, 1000};
     static int topkDefault = 10;
-    static double[] alphas = {0.1, 0.3, 0.5, 0.7, 1.0};
+    static double[] alphas = {0.1, 0.3, 0.5, 0.7, 0.9};
     static double alphaDefault = 0.5;
     static float[] radius = {1f, 2f, 5f, 10f, 20f};
+    //static float[] radius = {1f, 2f, 4f, 6f, 8f, 10f, 12f, 14f, 16f, 18f, 20f, 40f, 60f, 80f, 100f, 120f};
     static float radiusDefault = 10f;
 
-    // Query Type Maps
-//    static Map<Integer, String> aggregateTypeMap = new HashMap<>();
-//    static Map<Integer, String> rangeTypeMap = new HashMap<>();
-//    static Map<Integer, String> knnTypeMap = new HashMap<>();
 
     static ResultQueryTotal globalQueryResults;
 
     // Index Parameters
     static int fanout = 50; // Rtree fanout
-    static double betaArea = 0.9;   // RtreeEnhanced betaArea
-    static int maxWord = 10000; // RtreeEnhanced maxWord
+    static double betaArea = 0.1;   // RtreeEnhanced betaArea 0.9
+    static int maxWord = 2; // RtreeEnhanced maxWord 10000
     static int numClusters = 4; // CIRtree clusters
     static int numMoves = 4; // KMean numMoves
 
@@ -81,11 +80,20 @@ public class AppMain {
     //static String keywordsFilePath = "src/main/resources/data/key_test.txt"; // small debug set
     //static String locationsFilePath = "src/main/resources/data/loc_test.txt"; // small debug set
 
-    //static String keywordsFilePath = "src/main/resources/data/hotel_doc";
-    //static String locationsFilePath = "src/main/resources/data/hotel_loc";
+//    static String keywordsFilePath = "src/main/resources/data/hotel_doc";
+//    static String locationsFilePath = "src/main/resources/data/hotel_loc";
 
-    static String keywordsFilePath = "src/main/resources/data/icde19_real_doc.txt";
-    static String locationsFilePath = "src/main/resources/data/icde19_real_loc.txt";
+    //static String keywordsFilePath = "src/main/resources/data/icde19_real_doc.txt";
+    //static String locationsFilePath = "src/main/resources/data/icde19_real_loc.txt";
+
+    //static String keywordsFilePath = "src/main/resources/data/generated_keywords.txt";
+    //static String locationsFilePath = "src/main/resources/data/generated_locs.txt";
+
+    static String keywordsFilePath = "src/main/resources/data/postal_doc.txt";
+    static String locationsFilePath = "src/main/resources/data/postal_loc.txt";
+
+//    static String keywordsFilePath = "src/main/resources/data/sports_doc.txt";
+//    static String locationsFilePath = "src/main/resources/data/sports_loc.txt";
 
 
     // Results and Temp paths
@@ -142,7 +150,7 @@ public class AppMain {
         oper = launchDataStructureMenu();
         logger.info("Data Structure type: {}", oper);
 
-       if (oper.equals("HashMap")){
+        if (oper.equals("HashMap")){
             weightIndex = new HashMapDocumentStore();
         } else {
             weightIndex = new TreeMapDocumentStore();
@@ -317,16 +325,18 @@ public class AppMain {
             logger.info("Writing results in disk ...");
 
             boolean writeResult = launchWriteResultMenu();
+
+            // Temp fix to do multiple queries
             if (writeResult) {
                 logger.info("Writing results in disk ...");
-                writeResults();
+                //writeResults();
                 //writeResults(memResults, "[MEM]");
             } else {
                 logger.info("Discarding Results ...");
                 break; // TODO DELETE
             }
 
-        }while(true);
+        } while(true);
 
         logger.info("Exiting...");
     }
@@ -355,12 +365,9 @@ public class AppMain {
 
         switch (selection) {
             case 1:
-                oper = "ArrayList";
-                break;
-            case 2:
                 oper = "HashMap";
                 break;
-            case 3:
+            case 2:
                 oper = "TreeMap";
                 break;
             default:
