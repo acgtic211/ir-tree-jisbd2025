@@ -14,7 +14,10 @@ public class KeywordsAnalyzer {
 
     public static void main(String[] args) {
         //analyze("src/main/resources/data/hotel_doc");
-        analyze("src/main/resources/data/icde19_real_doc.txt");
+        //analyze("src/main/resources/data/icde19_real_doc.txt");
+        analyze("src/main/resources/data/keywords.txt");
+        //analyze("src/main/resources/data/postal_doc.txt");
+        //analyze("src/main/resources/data/sports_doc.txt");
     }
 
 
@@ -48,12 +51,13 @@ public class KeywordsAnalyzer {
 
             // For now print everything in the logger
             logger.info("Total lenght: {}", totalLength);
-            int cnt = 0;
-            for(Integer freq : wordsFreq.values()) {
-                cnt+=freq;
-            }
-            logger.info("Total freq: {}", cnt);
-            logger.info("Unique keywords: {} - List: {}", wordsFreq.size(), wordsFreq.toString());
+//            int cnt = 0;
+//            for(Integer freq : wordsFreq.values()) {
+//                cnt+=freq;
+//            }
+//            logger.info("Total freq: {}", cnt);
+            logger.info("Unique words:  {}", wordsFreq.size());
+            //logger.info("Unique keywords: {} - List: {}", wordsFreq.size(), wordsFreq.toString());
 
         }  catch (Exception e) {
             logger.error("Error while operating with weight file.", e);

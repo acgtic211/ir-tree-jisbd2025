@@ -12,7 +12,12 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 
 public class LocationAnalyzer {
-    static String locationsFilePath = "src/main/resources/data/icde19_real_loc.txt";
+    //static String locationsFilePath = "src/main/resources/data/icde19_real_loc.txt";
+    //static String locationsFilePath = "src/main/resources/data/hotel_loc";
+    //static String locationsFilePath = "src/main/resources/data/generated_locs.txt";
+    //static String locationsFilePath = "src/main/resources/data/postal_loc.txt";
+    static String locationsFilePath = "src/main/resources/data/sports_loc.txt";
+    //static String locationsFilePath = "src/main/resources/data/locations.txt";
 
     public static void main(String[] args) throws IOException {
         LineNumberReader location_reader = new LineNumberReader(new FileReader(locationsFilePath));
@@ -48,6 +53,6 @@ public class LocationAnalyzer {
         System.out.println("MaxLat: " + maxLat);
         System.out.println("MinLat: " + minLat);
         System.out.println("MaxLg: " + maxLg);
-        System.out.println("MaxLg: " + minLg);
+        System.out.println("MinLg: " + minLg);
     }
 }

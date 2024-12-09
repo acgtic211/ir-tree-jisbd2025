@@ -5,12 +5,22 @@ package org.ual.spatialindex.parameters;
  */
 public interface Parameters {
     /**
+     *  Testing set (key_test.txt - loc_test.txt)
+     */
+//     final double latitudeStart = -5;
+//     final double latitudeEnd = 5;
+//     final double longitudeStart = -4;
+//     final double longitudeEnd = 8;
+//     final int uniqueKeywords = 7;
+
+    /**
      *  Original set (keywords.txt - locations.txt)
      */
-    // final double latitudeStart = 31;
-    // final double latitudeEnd = 49;
-    // final double longitudeStart = -118;
-    // final double longitudeEnd = -81;
+//     final double latitudeStart = 31;
+//     final double latitudeEnd = 49;
+//     final double longitudeStart = -118;
+//     final double longitudeEnd = -81;
+//     final int uniqueKeywords = 6;
 
     /**
      *  Hotel set (hotel_doc - hotel_loc) objs: 20.676 keywords: 58821
