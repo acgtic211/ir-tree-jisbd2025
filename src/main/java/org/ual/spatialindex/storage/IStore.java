@@ -9,4 +9,5 @@ public interface IStore {
     void write(Weight weight);
 
     Iterator<Weight> iterator();
+    int getSize();
 }

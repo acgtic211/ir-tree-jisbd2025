@@ -293,6 +293,7 @@ public abstract class Node implements INode {
         // by one larger than node capacity.
         dataLength[capacity] = (data != null) ? data.data.length : 0;
         nodeData.data[capacity] = data;// TODO CHANGE THIS TO FIX NULLPOINTER
+        System.out.println("rtreesplit -> " + nodeData.toString());
         this.mbr[capacity] = mbr;
         identifiers[capacity] = id;
         docList[capacity] = doc;

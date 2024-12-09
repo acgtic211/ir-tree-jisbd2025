@@ -903,6 +903,27 @@ public abstract class Node implements INode { //implements INode
                 ", type=" + type +
                 '}';
     }
+
+    public String printNode() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Node{" + "\n" +
+                "\t level=" + level + "\n" +
+                "\t identifier=" + identifier + "\n" +
+                "\t children=" + children + "\n" +
+                "\t capacity=" + capacity + "\n" +
+                "\t nodeMBR=" + nodeMBR + "\n" +
+                "\t nodeData=" + nodeData + "\n" +
+                "\t mbr=" + Arrays.toString(mbr) + "\n" +
+                "\t identifiers=" + Arrays.toString(identifiers) + "\n" +
+                "\t dataLength=" + Arrays.toString(dataLength) + "\n" +
+                "\t totalDataLength=" + totalDataLength + "\n" +
+                "\t type=" + type + "\n" +
+                '}' + "\n");
+        for (int i = 0; i < children; i++) {
+            sb.append("Child " + i + ": " + mbr[i] + "\n");
+        }
+        return sb.toString();
+    }
 }
 
 

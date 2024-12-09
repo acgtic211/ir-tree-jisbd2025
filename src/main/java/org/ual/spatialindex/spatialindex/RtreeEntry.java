@@ -39,6 +39,15 @@ public class RtreeEntry implements IEntry {
         this.id = id;
     }
 
+    public static boolean checkOverlap(double[] min, double[] max, RtreeEntry e) {
+        for (int i = 0; i < min.length; i++) {
+            if (min[i] > e.getShape().getMBR().high[i] || max[i] < e.getShape().getMBR().low[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public String toString() {
         return "RtreeEntry [id=" + id + ", isLeafEntry=" + isLeafEntry + ", treeid=" + treeId + ", wordhit=" + wordHit
