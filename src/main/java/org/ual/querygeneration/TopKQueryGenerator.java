@@ -33,6 +33,10 @@ public class TopKQueryGenerator extends QueryGenerator {
             Query query = createKWQuery(queryId, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
                     centroidLatitude, centroidLongtitude, latitudeSpan, longtitudeSpan);
 
+            //TODO DELETE
+            query.keywords.clear();
+            query.keywords.add(1);
+
             tkQueries.add(new TopkKnnQuery(query));
         }
 

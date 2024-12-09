@@ -1,0 +1,206 @@
+package org.ual.utils.main;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ual.utils.ResultQueryTotal;
+import org.ual.utils.stats.QueryStats;
+import org.ual.utils.stats.QueryStatsData;
+
+import java.io.*;
+import java.util.*;
+
+public class StatisticsLogic {
+    private final String metricsDirectoryPath;
+    public static long weightIndexMemUsed;
+    public static long weightIndexPeakMemUsed;
+    public static long rTreeMemUsed;
+    public static long rTreePeakMemUsed;
+    public static long irTreeMemUsed;
+    public static long irTreePeakMemUsed;
+    public static long weightIndexBuildTime;
+    public static long rTreeBuildTime;
+    public static long irTreeBuildTime;
+    public ResultQueryTotal globalQueryResults;
+    public HashMap<String, QueryStats> queriesStats = new HashMap<>();
+
+    private static final Logger logger = LogManager.getLogger(StatisticsLogic.class);
+
+
+    public StatisticsLogic(String metricsDirectoryPath) {
+        this.metricsDirectoryPath = metricsDirectoryPath;
+    }
+
+    public static long getMemUsed() {
+        long totalMemory = Runtime.getRuntime().totalMemory();
+        long freeMemory = Runtime.getRuntime().freeMemory();
+        long usedMemory = totalMemory - freeMemory;
+
+        return usedMemory;
+    }
+
+    public static long printMemUsed(String txt, long prev, int n) {
+        long current = getMemUsed();
+        System.out.println(txt + ": " + (current - prev) + "   per item: " +
+                ((n == 0) ? "NaN" : (current - prev) / n));
+        return current - prev;
+    }
+
+    public static long cleanMem(int N, long prevMemUsed) {
+        long ret = prevMemUsed;
+        for (int i = 0; i < 5; i++) {
+            ret = Math.min(ret, StatisticsLogic.printMemUsed("MemTree", prevMemUsed, N));
+            System.gc();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                logger.error("Fail to clean memory", e);
+            }
+        }
+        return ret;
+    }
+
+    public void writeResults(/*ResultQueryTotal globalQueryResults, String metricsDirectoryPath */) {
+        logger.info("Writing Results...");
+
+//        StatisticsResultWriter.writeCSV(globalQueryResults.groupSizes, "group-size", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.writeCSV(globalQueryResults.percentages, "subgroup-size", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.writeCSV(globalQueryResults.numKeywords, "number-of-keyword", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.writeCSV(globalQueryResults.querySpaceAreas, "query-space-area", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.writeCSV(globalQueryResults.keyboardSpaceSizes, "keyword-space-size", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.writeCSV(globalQueryResults.topks, "topk", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.writeCSV(globalQueryResults.radii, "range", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.writeCSV(globalQueryResults.alphas, "alpha", globalQueryResults.queryType, metricsDirectoryPath);
+//
+//        StatisticsResultWriter.resultWriter(globalQueryResults.groupSizes, "group-size", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.resultWriter(globalQueryResults.percentages,"subgroup-size", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.resultWriter(globalQueryResults.numKeywords, "number-of-keyword", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.resultWriter(globalQueryResults.querySpaceAreas, "query-space-area", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.resultWriter(globalQueryResults.keyboardSpaceSizes, "keyword-space-size", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.resultWriter(globalQueryResults.topks, "topk", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.resultWriter(globalQueryResults.radii, "range", globalQueryResults.queryType, metricsDirectoryPath);
+//        StatisticsResultWriter.resultWriter(globalQueryResults.alphas, "alpha", globalQueryResults.queryType, metricsDirectoryPath);
+
+        StatisticsLogic.resultWriter(queriesStats, metricsDirectoryPath, true);
+        StatisticsLogic.resultWriter(queriesStats, metricsDirectoryPath, false);
+
+        logger.info("Done");
+    }
+
+
+    // Write human-readable file
+    public static void resultWriter(HashMap<String, QueryStats> queriesStats, String metricsDirectoryPath, boolean writeCSV) {
+        for (Map.Entry<String, QueryStats> qryType : queriesStats.entrySet()) {
+            if (!qryType.getValue().groupSizes.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "GroupSize"; // [Aggregate] alpha
+                if (writeCSV)
+                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().groupSizes);
+                else
+                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().groupSizes);
+            }
+            if (!qryType.getValue().alphas.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "Alpha"; // [Aggregate] alpha
+                if (writeCSV)
+                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().alphas);
+                else
+                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().alphas);
+            }
+            if (!qryType.getValue().numKeywords.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "NumberKeywords"; // [Aggregate] alpha
+                if (writeCSV)
+                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().numKeywords);
+                else
+                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().numKeywords);
+            }
+            if (!qryType.getValue().percentages.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "Percentages"; // [Aggregate] alpha
+                if (writeCSV)
+                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().percentages);
+                else
+                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().percentages);
+            }
+            if (!qryType.getValue().keyboardSpaceSizes.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "KeywordSpaceSize"; // [Aggregate] alpha
+                if (writeCSV)
+                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().keyboardSpaceSizes);
+                else
+                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().keyboardSpaceSizes);
+            }
+            if (!qryType.getValue().querySpaceAreas.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "SpaceArea"; // [Aggregate] alpha
+                writeTXT(metricsDirectoryPath, fileName, qryType.getValue().querySpaceAreas);
+            }
+            if (!qryType.getValue().radii.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "Radius"; // [Aggregate] alpha
+                if (writeCSV)
+                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().radii);
+                else
+                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().radii);
+            }
+            if (!qryType.getValue().topks.isEmpty()) {
+                String fileName = "[" + qryType.getKey() + "]" + "TopK"; // [Aggregate] alpha
+                if (writeCSV)
+                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().topks);
+                else
+                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().topks);
+            }
+        }
+    }
+
+    private static void writeTXT(String metricsDirectoryPath, String fileName, List<QueryStatsData> qryData) {
+        try (FileWriter fw = new FileWriter(metricsDirectoryPath + fileName + ".txt", true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+            out.println("==================================================");
+            out.println("");
+            for (QueryStatsData resultData : qryData) {
+                out.println("Parameter: " + resultData.queryType + " - Value: " + resultData.value);
+                out.printf("[%s] totalTime= %dms | avgTime= %dms | avgNodesVisited= %f | avgSpatCost= %.6f | avgIRCost= %.6f \n",
+                        resultData.queryType, resultData.totalTime, resultData.averageTime, resultData.averageNodesVisited, resultData.averageSpatialCost,
+                        resultData.averageIRCost);
+                out.println("");
+            }
+            out.println("");
+            out.println("==================================================");
+        } catch (IOException e) {
+            logger.error("Fail to write results", e);
+        }
+    }
+
+    private static void writeCSV(String metricsDirectoryPath, String fileName, List<QueryStatsData> qryData) {
+        ArrayList<String> headers = new ArrayList<>();
+        ArrayList<String> row = new ArrayList<>();
+        boolean writeHeaders = true;
+
+        //HashMap<String, HashMap<String, String>> values = new HashMap<>();
+        HashMap<String, ArrayList<String>> values = new HashMap<>();
+        // paramName, paramVal, paramVal, ...
+        // queryName, val, val, ...
+
+        for (QueryStatsData resultData : qryData) {
+            headers.add(resultData.value);
+            row.add(String.valueOf(resultData.totalTime));
+
+            // Check if file exist to skip writing headers
+            File file = new File(metricsDirectoryPath + fileName + ".csv");
+            if (file.exists())
+                writeHeaders = false;
+
+            try (FileWriter fw = new FileWriter(metricsDirectoryPath + fileName + ".csv", true);
+                 BufferedWriter bw = new BufferedWriter(fw);
+                 PrintWriter out = new PrintWriter(bw)) {
+
+                // Write headers
+                if (writeHeaders)
+                    out.println(String.join(",", headers));
+
+                // Write rows
+                out.println(String.join(",", row));
+
+            } catch (IOException e) {
+                logger.error("Fail to write results", e);
+            }
+
+        }
+
+    }
+}

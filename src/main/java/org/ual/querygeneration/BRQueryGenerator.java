@@ -1,6 +1,7 @@
 package org.ual.querygeneration;
 
 import org.ual.query.Query;
+import org.ual.querytype.aggregate.GNNKQuery;
 import org.ual.querytype.range.BRQuery;
 import org.ual.spatialindex.parameters.Parameters;
 
@@ -31,9 +32,13 @@ public class BRQueryGenerator extends QueryGenerator {
 
             Query query = createTopKQuery(queryId, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
                     centroidLatitude, centroidLongtitude, latitudeSpan, longtitudeSpan);
+            //TODO DELETE
+            query.keywords.clear();
+            query.keywords.add(1);
+
             brQueries.add(new BRQuery(query));
         }
-
+        for(BRQuery q : brQueries) System.out.println(q.query.location);
         return brQueries;
     }
 }

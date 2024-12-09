@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.ual.spatialindex.storage.IStore;
 import org.ual.spatialindex.storage.Weight;
 import org.ual.spatialindex.storage.WeightEntry;
+import org.ual.utils.main.StatisticsLogic;
 
 import java.io.FileReader;
 import java.io.LineNumberReader;
@@ -34,6 +35,7 @@ public class WeightCompute {
         ArrayList<WeightEntry> wordWeights = new ArrayList<>();
 
         long start = System.currentTimeMillis();
+        long initMem = StatisticsLogic.getMemUsed();
         try {
             LineNumberReader lr = new LineNumberReader(new FileReader(wordsFile));
             int totalLength = 0;
@@ -97,7 +99,18 @@ public class WeightCompute {
             logger.error("Error while operating with weight file.", e);
         }
         long end = System.currentTimeMillis();
-        logger.info("Weight processing done in: {} ms", (end - start));
+        long endMem = StatisticsLogic.getMemUsed();
+        StatisticsLogic.weightIndexPeakMemUsed = (endMem - initMem);
+        StatisticsLogic.weightIndexMemUsed = StatisticsLogic.cleanMem(weightList.getSize(), initMem);
+        StatisticsLogic.weightIndexBuildTime = (end - start);
+
+        logger.info("Weight processing done in: {} ms", StatisticsLogic.weightIndexBuildTime);
+        logger.info("Weights peak memory usage: {} Megabytes", (StatisticsLogic.weightIndexPeakMemUsed/1024)/1024);
+        logger.info("Weights clean memory usage: {} Megabytes", (StatisticsLogic.weightIndexMemUsed/1024)/1024);
+        //long testMem = StatisticsLogic.getMemUsed();
+
+//        logger.info("Weights memory usage: {} Megabytes", ((endMem - initMem)/1024)/1024);
+//        logger.info("Weights clean memory usage: {} Megabytes", ((testMem)/1024)/1024);
     }
 
 

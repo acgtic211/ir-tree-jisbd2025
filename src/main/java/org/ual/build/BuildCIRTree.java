@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.ual.documentindex.InvertedFile;
 import org.ual.spatialindex.rtree.RTree;
 import org.ual.spatialindex.storage.AbstractDocumentStore;
+import org.ual.utils.main.StatisticsLogic;
 
 import java.util.HashMap;
 
@@ -25,11 +26,26 @@ public class BuildCIRTree {
         RTree.numOfClusters = numClusters;
 
         long start = System.currentTimeMillis();
+        long initMem = StatisticsLogic.getMemUsed();
         tree.cirClusterEnhance(clusterMap, dms, invertedFile);
         long end = System.currentTimeMillis();
+        long endMem = StatisticsLogic.getMemUsed();
+        StatisticsLogic.irTreePeakMemUsed = (endMem - initMem);
+        StatisticsLogic.irTreeMemUsed = StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+        StatisticsLogic.irTreeBuildTime = (end - start);
 
-        //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
-        logger.info("CIRtree build in: {} ms", (end - start));
+        logger.info("CIRtree build in: {} ms", StatisticsLogic.irTreeBuildTime);
+        logger.info("CIRtree peak memory usage: {} Megabytes", (StatisticsLogic.irTreePeakMemUsed/1024)/1024);
+        logger.info("CIRtree memory usage: {} Megabytes", (StatisticsLogic.irTreeMemUsed/1024)/1024);
+
+
+
+//        StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+//        long memUsed = StatisticsLogic.getMemUsed();
+//
+//        //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
+//        logger.info("CIRtree build in: {} ms", (end - start));
+//        logger.info("CIRtree memory usage: {} Megabytes", ((memUsed)/1024)/1024);
 
         boolean ret = tree.isIndexValid();
         if (!ret)

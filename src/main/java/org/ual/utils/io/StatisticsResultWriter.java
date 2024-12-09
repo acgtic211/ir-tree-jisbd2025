@@ -16,7 +16,7 @@ public class StatisticsResultWriter {
     // Read
 
     // Write human-readable file
-    private static void resultWriter(List<ResultQueryParameter> resultsByParam, String paramName, String queryType, String metricsDirectoryPath) {
+    public static void resultWriter(List<ResultQueryParameter> resultsByParam, String paramName, String queryType, String metricsDirectoryPath) {
         if(resultsByParam.isEmpty()) {
             logger.info("Skipping param: {} because is empty", paramName);
             return;

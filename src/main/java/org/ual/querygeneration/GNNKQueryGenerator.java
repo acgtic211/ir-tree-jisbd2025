@@ -58,7 +58,7 @@ public class GNNKQueryGenerator extends QueryGenerator {
             GNNKQuery gnnkQuery = new GNNKQuery(queries, aggregator);
             gnnkQueries.add(gnnkQuery);
         }
-
+        for(GNNKQuery q : gnnkQueries) System.out.println(q.queries.get(0).location);
         return gnnkQueries;
 
     }

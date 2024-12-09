@@ -30,6 +30,10 @@ public class BKQueryGenerator extends QueryGenerator {
 
             Query query = createTopKQuery(queryId, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
                     centroidLatitude, centroidLongtitude, latitudeSpan, longtitudeSpan);
+            //TODO DELETE
+            query.keywords.clear();
+            query.keywords.add(1);
+
             bkQueries.add(new BooleanKnnQuery(query));
         }
 

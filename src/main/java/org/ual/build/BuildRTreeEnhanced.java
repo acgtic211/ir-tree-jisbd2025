@@ -2,12 +2,14 @@ package org.ual.build;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ual.spatialindex.rtree.RTree;
 import org.ual.spatialindex.rtreeenhanced.RTreeEnhanced;
 import org.ual.spatialindex.spatialindex.Region;
 import org.ual.spatialindex.storage.AbstractDocumentStore;
 import org.ual.spatialindex.storagemanager.*;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.HashSet;
 
@@ -109,4 +111,88 @@ public class BuildRTreeEnhanced {
 
         return tree;
     }
+
+    public static RTreeEnhanced buildEnhancedRTree(String locationsFilePath, int fanout, double fillFactor, int dimension, int maxWord,
+                                   AbstractDocumentStore weightIndex, double betaArea) {
+        try (LineNumberReader locationReader = new LineNumberReader((new FileReader(locationsFilePath)))) {
+            //maxWord is used to control the number of words involved in tree building.
+            //Large maxWord may incur high construction cost.
+            AbstractDocumentStore.maxWord = maxWord;
+
+            // Create a memory based storage manager for the nodes
+            IStorageManager storageManager = new NodeStorageManager();
+
+            // Create a new, empty, RTree with dimensionality 2, minimum load 70%, using "file" as
+            // the StorageManager and the RSTAR splitting policy.
+            PropertySet propertySet = new PropertySet();
+
+            propertySet.setProperty("FillFactor", fillFactor);
+
+            Integer capacity = fanout;
+            propertySet.setProperty("IndexCapacity", capacity);
+            propertySet.setProperty("LeafCapacity", capacity);
+            // Index capacity and leaf capacity may be different.
+
+            propertySet.setProperty("Dimension", dimension);
+
+            // Create EnhancedRTree
+            RTreeEnhanced tree = new RTreeEnhanced(propertySet, storageManager, weightIndex, betaArea);
+
+            int count = 0;
+            int id;
+            double x1, y1;
+            double[] f1 = new double[2];
+            double[] f2 = new double[2];
+            String line;
+            String[] temp;
+
+            long start = System.currentTimeMillis();
+
+            while ((line = locationReader.readLine()) != null) {
+                temp = line.split(",");
+                id = Integer.parseInt(temp[0]);
+                x1 = Double.parseDouble(temp[1]);
+                y1 = Double.parseDouble(temp[2]);
+
+                f1[0] = x1;
+                f1[1] = y1;
+                f2[0] = x1;
+                f2[1] = y1;
+                Region r = new Region(f1, f2);
+
+                HashSet<Integer> doc = RTreeEnhanced.objstore.readSet(id);
+
+                tree.insertData(null, r, id, doc);
+
+//            if ((count % 1000) == 0)
+//                System.err.println(count);
+
+                count++;
+            }
+
+            long end = System.currentTimeMillis();
+            logger.info("Operations: {}", count);
+            logger.info("Tree: {}", tree);
+            //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
+            logger.info("EnhancedRTree Enhanced build in: {} ms", (end - start));
+
+            // since we created a new RTree, the PropertySet that was used to initialize the structure
+            // now contains the IndexIdentifier property, which can be used later to reuse the index.
+            // (Remember that multiple indices may reside in the same storage manager at the same time
+            //  and every one is accessed using its unique IndexIdentifier).
+            Integer indexID = (Integer) propertySet.getProperty("IndexIdentifier");
+            logger.info("Index ID: {}", indexID);
+
+            boolean ret = tree.isIndexValid();
+            if (!ret)
+                logger.error("Structure is INVALID!");
+
+            return tree;
+        } catch (IOException e) {
+            logger.error("Fail to operate with file: ", e);
+            throw new RuntimeException(e);
+        }
+
+    }
+
 }

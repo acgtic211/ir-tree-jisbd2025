@@ -53,7 +53,7 @@ public class QueryResultWriter {
         stringBuilder.append("\n");
     }
 
-    public void writeBKQResult(List<BooleanKnnQuery.Result> results) throws IOException {
+    public void writeBKQResult(List<BooleanKnnQuery.Result> results) {
         stringBuilder.append("Query ").append(queryCount).append("\n");
         for (BooleanKnnQuery.Result result : results) {
             stringBuilder.append(String.format("ID: %d - MinDist: %.3f\n", result.id, result.minDistance));//.totalCost
@@ -62,7 +62,7 @@ public class QueryResultWriter {
         stringBuilder.append("\n");
     }
 
-    public void writeTKQResult(List<TopkKnnQuery.Result> results) throws IOException {
+    public void writeTKQResult(List<TopkKnnQuery.Result> results) {
         stringBuilder.append("Query ").append(queryCount).append("\n");
         for (TopkKnnQuery.Result result : results) {
             stringBuilder.append(String.format("ID: %d - MinDist: %.3f - Cost: %.3f\n", result.id, result.minDistance, result.cost));//.totalCost
@@ -71,7 +71,11 @@ public class QueryResultWriter {
         stringBuilder.append("\n");
     }
 
-    public void write(String str, boolean printNewline) throws IOException {
+    public void writeLineSeparator() {
+        stringBuilder.append("====================================================\n");
+    }
+
+    public void write(String str, boolean printNewline) {
         stringBuilder.append(str);
         if (printNewline) {
             stringBuilder.append("\n");
