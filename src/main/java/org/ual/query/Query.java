@@ -12,6 +12,9 @@ public class Query {
     public List<Integer> keywords;
     public List<Double> keywordWeights;
 
+    //TEST
+    QueryResult result;
+
     public Query(int id) {
         this.id = id;
         this.keywords = new ArrayList<>();

@@ -4,7 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ual.documentindex.InvertedFile;
 import org.ual.query.Query;
-import org.ual.spatialindex.parameters.Parameters;
+//import org.ual.spatialindex.parameters.Parameters;
+import org.ual.spatialindex.parameters.DatasetParameters;
 import org.ual.spatialindex.spatialindex.*;
 import org.ual.spatialindex.storage.*;
 import org.ual.spatialindex.storagemanager.*;
@@ -25,6 +26,8 @@ public class RTreeEnhanced implements ISpatialIndex {
     //public static BTree<Integer, HashSet<Integer>> docbtree;
     public static HashMap<Integer, HashSet<Integer>> docTree;
     public static AbstractDocumentStore objstore;
+
+    private DatasetParameters datasetParameters;
 
     RWLock rwLock;
 
@@ -74,7 +77,8 @@ public class RTreeEnhanced implements ISpatialIndex {
     ArrayList<INodeCommand> readNodeCommands = new ArrayList<>();
     ArrayList<INodeCommand> deleteNodeCommands = new ArrayList<>();
 
-    public RTreeEnhanced(PropertySet ps, IStorageManager sm, AbstractDocumentStore weightIndex, double beta_area) {
+    public RTreeEnhanced(PropertySet ps, IStorageManager sm, AbstractDocumentStore weightIndex, double beta_area, DatasetParameters datasetParameters) {
+        this.datasetParameters = datasetParameters;
         betaArea = beta_area;
         rwLock = new RWLock();
         storageManager = sm;
@@ -1159,8 +1163,8 @@ public class RTreeEnhanced implements ISpatialIndex {
 
     }
 
-    public static double combinedScore(double spatial, double ir) {
-        double spatialCost = spatial / Parameters.maxD;
+    public double combinedScore(double spatial, double ir) {
+        double spatialCost = spatial / datasetParameters.maxD;
         double keywordMismatchCost = (1 - ir);
 
         if (spatialCost < 0)

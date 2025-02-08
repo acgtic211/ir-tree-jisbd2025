@@ -2,7 +2,9 @@ package org.ual.utils.analyze;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ual.AppMain;
+import org.ual.spatialindex.parameters.Dataset;
+import org.ual.spatialindex.parameters.DatasetParameters;
+import org.ual.spatialindex.parameters.ParametersFactory;
 
 import java.io.FileReader;
 import java.io.LineNumberReader;
@@ -13,11 +15,8 @@ public class KeywordsAnalyzer {
     private static final Logger logger = LogManager.getLogger(KeywordsAnalyzer.class);
 
     public static void main(String[] args) {
-        //analyze("src/main/resources/data/hotel_doc");
-        //analyze("src/main/resources/data/icde19_real_doc.txt");
-        analyze("src/main/resources/data/keywords.txt");
-        //analyze("src/main/resources/data/postal_doc.txt");
-        //analyze("src/main/resources/data/sports_doc.txt");
+        DatasetParameters datasetParameters = ParametersFactory.getParameters(Dataset.POSTAL_CODES_SET);
+        analyze(datasetParameters.keywordFile);
     }
 
 

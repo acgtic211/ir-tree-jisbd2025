@@ -1,25 +1,21 @@
 package org.ual.utils.analyze;
 
-import org.ual.spatialindex.rtree.RTree;
-import org.ual.spatialindex.spatialindex.Region;
-import org.ual.spatialindex.storagemanager.IStorageManager;
-import org.ual.spatialindex.storagemanager.NodeStorageManager;
-import org.ual.spatialindex.storagemanager.PropertySet;
+import org.ual.spatialindex.parameters.Dataset;
+import org.ual.spatialindex.parameters.DatasetParameters;
+import org.ual.spatialindex.parameters.ParametersFactory;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 
 public class LocationAnalyzer {
-    //static String locationsFilePath = "src/main/resources/data/icde19_real_loc.txt";
-    //static String locationsFilePath = "src/main/resources/data/hotel_loc";
-    //static String locationsFilePath = "src/main/resources/data/generated_locs.txt";
-    //static String locationsFilePath = "src/main/resources/data/postal_loc.txt";
-    static String locationsFilePath = "src/main/resources/data/sports_loc.txt";
-    //static String locationsFilePath = "src/main/resources/data/locations.txt";
 
     public static void main(String[] args) throws IOException {
+        DatasetParameters datasetParameters = ParametersFactory.getParameters(Dataset.POSTAL_CODES_SET);
+        analyze(datasetParameters.locationFile);
+    }
+
+    private static void analyze(String locationsFilePath) throws IOException {
         LineNumberReader location_reader = new LineNumberReader(new FileReader(locationsFilePath));
 
         int id;

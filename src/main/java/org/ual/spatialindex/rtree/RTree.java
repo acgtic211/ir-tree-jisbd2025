@@ -4,7 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ual.documentindex.InvertedFile;
 import org.ual.query.Query;
-import org.ual.spatialindex.parameters.Parameters;
+//import org.ual.spatialindex.parameters.Parameters;
+import org.ual.spatialindex.parameters.DatasetParameters;
 import org.ual.spatialindex.spatialindex.*;
 import org.ual.spatialindex.storage.IStore;
 import org.ual.spatialindex.storage.WeightEntry;
@@ -19,6 +20,7 @@ public class RTree implements ISpatialIndex {
     public static double alphaDistribution;
     public static int numOfClusters = 0;
 
+    DatasetParameters datasetParameters;
     RWLock rwLock;
     IStorageManager storageManager;
 
@@ -74,7 +76,8 @@ public class RTree implements ISpatialIndex {
 
 
 
-    public RTree(PropertySet ps, IStorageManager sm) {
+    public RTree(PropertySet ps, IStorageManager sm, DatasetParameters datasetParameters) {
+        this.datasetParameters = datasetParameters;
         rwLock = new RWLock();
         storageManager = sm;
         rootID = IStorageManager.NewPage;
@@ -115,8 +118,9 @@ public class RTree implements ISpatialIndex {
         }
     }
 
-    // New Constructor to in-memory IRTree
+    // New Constructor to in-memory IRTree// TODO remove
     public RTree(RTree rtree) {
+        datasetParameters = rtree.datasetParameters;
         rwLock = rtree.rwLock;
         storageManager = rtree.storageManager;
         rootID = rtree.rootID;
@@ -1350,8 +1354,8 @@ public class RTree implements ISpatialIndex {
 
     }
 
-    public static double combinedScore(double spatial, double ir) {
-        double spatialCost = spatial / Parameters.maxD;
+    public double combinedScore(double spatial, double ir) {
+        double spatialCost = spatial / datasetParameters.maxD;
         double keywordMismatchCost = (1 - ir);
 
         if (spatialCost < 0)
