@@ -2,6 +2,7 @@ package org.ual.build;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ual.spatialindex.parameters.DatasetParameters;
 import org.ual.spatialindex.rtree.RTree;
 import org.ual.spatialindex.rtree.BulkLoader;
 import org.ual.spatialindex.spatialindex.NodeData;
@@ -21,14 +22,14 @@ public class BuildRTree {
      *
      * location_file format: one object per line; each line: id,x,y (integer,double,double)
      *
-     * @param locationsFilePath
+     * @param datasetParameters
      * @param fanout
      * @return RTree
      * @throws IOException
      */
-    public static RTree buildRTree(String locationsFilePath, int fanout) throws IOException {
+    public static RTree buildRTree(DatasetParameters datasetParameters, int fanout ) throws IOException {
 
-        LineNumberReader location_reader = new LineNumberReader(new FileReader(locationsFilePath));
+        LineNumberReader location_reader = new LineNumberReader(new FileReader(datasetParameters.locationFile));
 
         // Create a memory based storage manager.
         IStorageManager storageManager = new NodeStorageManager();
@@ -47,7 +48,7 @@ public class BuildRTree {
         capacity = 2;
         ps2.setProperty("Dimension", capacity);
 
-        RTree tree = new RTree(ps2, storageManager);
+        RTree tree = new RTree(ps2, storageManager, datasetParameters);
 
         int count = 0;
         int id;
@@ -102,8 +103,8 @@ public class BuildRTree {
     }
 
 
-    public static RTree buildRTree(String locationsFilePath, int fanout, double fillFactor, int dimension) {
-        try(LineNumberReader locationReader = new LineNumberReader((new FileReader(locationsFilePath)))) {
+    public static RTree buildRTree(DatasetParameters datasetParameters, int fanout, double fillFactor, int dimension) {
+        try(LineNumberReader locationReader = new LineNumberReader((new FileReader(datasetParameters.locationFile)))) {
             // Create a memory based storage manager.
             IStorageManager storageManager = new NodeStorageManager();
 
@@ -119,7 +120,7 @@ public class BuildRTree {
 
             propertySet.setProperty("Dimension", dimension);
 
-            RTree tree = new RTree(propertySet, storageManager);
+            RTree tree = new RTree(propertySet, storageManager, datasetParameters);
 
             int count = 0;
             int id;
@@ -184,8 +185,8 @@ public class BuildRTree {
     }
 
 
-    public static RTree buildRTreeSTR(String locationsFilePath, int fanout, double fillFactor, int dimension) {
-        try(LineNumberReader locationReader = new LineNumberReader((new FileReader(locationsFilePath)))) {
+    public static RTree buildRTreeSTR(DatasetParameters datasetParameters, int fanout, double fillFactor, int dimension) {
+        try(LineNumberReader locationReader = new LineNumberReader((new FileReader(datasetParameters.locationFile)))) {
             // Create a memory based storage manager.
             IStorageManager storageManager = new NodeStorageManager();
 
@@ -201,7 +202,7 @@ public class BuildRTree {
 
             propertySet.setProperty("Dimension", dimension);
 
-            RTree tree = new RTree(propertySet, storageManager);
+            RTree tree = new RTree(propertySet, storageManager, datasetParameters);
 
 
             int count = 0;

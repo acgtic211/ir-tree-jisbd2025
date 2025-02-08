@@ -2,6 +2,7 @@ package org.ual.build;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ual.spatialindex.parameters.DatasetParameters;
 import org.ual.spatialindex.rtree.RTree;
 import org.ual.spatialindex.rtreeenhanced.RTreeEnhanced;
 import org.ual.spatialindex.spatialindex.Region;
@@ -21,7 +22,7 @@ public class BuildRTreeEnhanced {
 
     /**
      * Build a R-Tree like structure that takes document similarity into account
-     * @param locationsFilePath
+     * @param datasetParameters
      * @param weightIndex
      * @param fanout
      * @param betaArea
@@ -29,12 +30,12 @@ public class BuildRTreeEnhanced {
      * @return
      * @throws Exception
      */
-    public static RTreeEnhanced buildRTreeEnhanced(String locationsFilePath, AbstractDocumentStore weightIndex, int fanout, double betaArea, int maxWord) throws Exception {
+    public static RTreeEnhanced buildRTreeEnhanced(DatasetParameters datasetParameters, AbstractDocumentStore weightIndex, int fanout, double betaArea, int maxWord) throws Exception {
         //maxWord is used to control the number of words involved in tree building.
         //Large maxWord may incur high construction cost.
         AbstractDocumentStore.maxWord = maxWord;
 
-        LineNumberReader location_reader = new LineNumberReader(new FileReader(locationsFilePath));
+        LineNumberReader location_reader = new LineNumberReader(new FileReader(datasetParameters.locationFile));
 
         // Create a memory based storage manager for the nodes
         IStorageManager storageManager = new NodeStorageManager();
@@ -55,7 +56,7 @@ public class BuildRTreeEnhanced {
         ps2.setProperty("Dimension", i);
 
         // Create DRTree
-        RTreeEnhanced tree = new RTreeEnhanced(ps2, storageManager, weightIndex, betaArea);
+        RTreeEnhanced tree = new RTreeEnhanced(ps2, storageManager, weightIndex, betaArea, datasetParameters);
 
 
         int count = 0;
@@ -112,9 +113,9 @@ public class BuildRTreeEnhanced {
         return tree;
     }
 
-    public static RTreeEnhanced buildEnhancedRTree(String locationsFilePath, int fanout, double fillFactor, int dimension, int maxWord,
+    public static RTreeEnhanced buildEnhancedRTree(DatasetParameters datasetParameters, int fanout, double fillFactor, int dimension, int maxWord,
                                    AbstractDocumentStore weightIndex, double betaArea) {
-        try (LineNumberReader locationReader = new LineNumberReader((new FileReader(locationsFilePath)))) {
+        try (LineNumberReader locationReader = new LineNumberReader((new FileReader(datasetParameters.locationFile)))) {
             //maxWord is used to control the number of words involved in tree building.
             //Large maxWord may incur high construction cost.
             AbstractDocumentStore.maxWord = maxWord;
@@ -136,7 +137,7 @@ public class BuildRTreeEnhanced {
             propertySet.setProperty("Dimension", dimension);
 
             // Create EnhancedRTree
-            RTreeEnhanced tree = new RTreeEnhanced(propertySet, storageManager, weightIndex, betaArea);
+            RTreeEnhanced tree = new RTreeEnhanced(propertySet, storageManager, weightIndex, betaArea, datasetParameters);
 
             int count = 0;
             int id;

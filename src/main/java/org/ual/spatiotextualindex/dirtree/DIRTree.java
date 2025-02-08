@@ -5,12 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.ual.documentindex.InvertedFile;
 import org.ual.query.Query;
 import org.ual.querytype.*;
-import org.ual.querytype.aggregate.AggregateQuery;
-import org.ual.querytype.aggregate.GNNKQuery;
-import org.ual.querytype.aggregate.SGNNKQuery;
-import org.ual.querytype.knn.BooleanKnnQuery;
-import org.ual.querytype.knn.TopkKnnQuery;
-import org.ual.querytype.range.BRQuery;
+//import org.ual.querytype.aggregate.AggregateQuery;
+//import org.ual.querytype.aggregate.GNNKQuery;
+//import org.ual.querytype.aggregate.SGNNKQuery;
+//import org.ual.querytype.knn.BooleanKnnQuery;
+//import org.ual.querytype.knn.TopkKnnQuery;
+//import org.ual.querytype.range.BRQuery;
+import org.ual.spatialindex.parameters.DatasetParameters;
 import org.ual.spatialindex.rtreeenhanced.RTreeEnhanced;
 import org.ual.spatialindex.rtreeenhanced.Node;
 import org.ual.spatialindex.spatialindex.ISpatioTextualIndex;
@@ -20,7 +21,6 @@ import org.ual.spatialindex.spatialindex.RtreeEntry;
 import org.ual.spatialindex.storage.AbstractDocumentStore;
 import org.ual.spatialindex.storagemanager.IStorageManager;
 import org.ual.spatialindex.storagemanager.PropertySet;
-import org.ual.spatiotextualindex.irtree.IRTree;
 
 import java.util.*;
 
@@ -28,8 +28,8 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
 
     private static final Logger log = LogManager.getLogger(DIRTree.class);
 
-    public DIRTree(PropertySet ps, IStorageManager sm, AbstractDocumentStore weightIndex, double beta_area) {
-        super(ps, sm, weightIndex, beta_area);
+    public DIRTree(PropertySet ps, IStorageManager sm, AbstractDocumentStore weightIndex, double beta_area, DatasetParameters datasetParameters) {
+        super(ps, sm, weightIndex, beta_area, datasetParameters);
     }
 
     public DIRTree(RTreeEnhanced dirtree) {
@@ -37,18 +37,25 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
     }
 
 
-    public List<GNNKQuery.Result> gnnkBaseline(InvertedFile invertedFile, GNNKQuery gnnkQuery, int topk) {
+
+
+    /**
+     * @return A list of objects with size at most k,
+     * where objects are sorted according to the decreasing value of their costs.
+     */
+    @Override
+    public List<AggregateSKNNQuery.Result> gnnkBaselineNEW(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk) {
         LinkedList<NNEntryExtended> list = new LinkedList<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         list.add(root);
 
         // Current (at most) k best objects, sorted according to their decreasing value of cost.
         // So the highest cost object will always be on top.
-        PriorityQueue<GNNKQuery.Result> currentBestObjects =
-                new PriorityQueue<>(topk, new WorstFirstNNEntryComparator());
+        PriorityQueue<AggregateSKNNQuery.Result> currentBestObjects =
+                new PriorityQueue<>(topk, new WorstFirstNNEntryComparatorNEW());
         // Dummy objects
         for (int i = 0; i < topk; i++) {
-            currentBestObjects.add(new GNNKQuery.Result(-1, new Cost(0, 0, Double.MAX_VALUE)));
+            currentBestObjects.add(new AggregateSKNNQuery.Result(-1, new Cost(0, 0, Double.MAX_VALUE)));
         }
 
         // Cost of the highest valued node of current best objects
@@ -73,10 +80,10 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
 
                 int childId = n.identifiers[child];
                 if (n.level == 0) {
-                    currentBestObjects.add(new GNNKQuery.Result(childId, aggregateCost));
+                    currentBestObjects.add(new AggregateSKNNQuery.Result(childId, aggregateCost));
                     currentBestObjects.poll();
                     assert currentBestObjects.peek() != null;
-                    costBound = currentBestObjects.peek().cost.totalCost;
+                    costBound = currentBestObjects.peek().aggregateCost.totalCost;
                 } else {
                     rTreeEntry = new RtreeEntry(childId, false);
                     NNEntryExtended entry = new NNEntryExtended(rTreeEntry, aggregateCost);
@@ -85,27 +92,25 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
             }
         }
 
-        List<GNNKQuery.Result> results = new ArrayList<>(currentBestObjects);
+        List<AggregateSKNNQuery.Result> results = new ArrayList<>(currentBestObjects);
         Collections.sort(results);
+
         return results;
     }
 
-    /**
-     * @return A list of objects with size at most k,
-     * where objects are sorted according to the decreasing value of their costs.
-     */
-    public List<SGNNKQuery.Result> sgnnkBaseline(InvertedFile invertedFile, SGNNKQuery sgnnkQuery, int topk) {
+    @Override
+    public List<AggregateSKNNQuery.Result> sgnnkBaselineNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
         LinkedList<NNEntryExtended> list = new LinkedList<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         list.add(root);
 
         // Current (at most) k best objects, sorted according to their decreasing value of cost.
         // So the highest cost object will always be on top.
-        PriorityQueue<SGNNKQuery.Result> currentBestObjects =
-                new PriorityQueue<>(topk, new WorstFirstNNEntryComparator());
+        PriorityQueue<AggregateSKNNQuery.Result> currentBestObjects =
+                new PriorityQueue<>(topk, new WorstFirstNNEntryComparatorNEW());
         // Dummy objects
         for (int i = 0; i < topk; i++) {
-            currentBestObjects.add(new SGNNKQuery.Result(-1, new Cost(0, 0, Double.MAX_VALUE), null));
+            currentBestObjects.add(new AggregateSKNNQuery.Result(-1, new Cost(0, 0, Double.MAX_VALUE), null));
         }
         double costBound = Double.MAX_VALUE;
 
@@ -156,9 +161,9 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
                 int childId = n.identifiers[child];
 
                 if (n.level == 0) {
-                    currentBestObjects.add(new SGNNKQuery.Result(childId, aggregateCost, minimumCostQueryIds));
+                    currentBestObjects.add(new AggregateSKNNQuery.Result(childId, aggregateCost, minimumCostQueryIds));
                     currentBestObjects.poll();
-                    costBound = currentBestObjects.peek().cost.totalCost;
+                    costBound = currentBestObjects.peek().aggregateCost.totalCost;
                 } else {
                     rTreeEntry = new RtreeEntry(childId, false);
                     list.addFirst(new NNEntryExtended(rTreeEntry, minimumCostQueryIds, aggregateCost));
@@ -167,29 +172,26 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
             }
         }
 
-        List<SGNNKQuery.Result> results = new ArrayList<>(currentBestObjects);  // TODO CHECK FIX
+        List<AggregateSKNNQuery.Result> results = new ArrayList<>(currentBestObjects);  // TODO CHECK FIX
         Collections.sort(results);
+
         return results;
     }
 
-
-    /**
-     * @return A list of objects with size at most k,
-     * where objects are sorted according to the decreasing value of their costs.
-     */
-    public List<GNNKQuery.Result> gnnk(InvertedFile invertedFile, GNNKQuery gnnkQuery, int topk) {
+    @Override
+    public List<AggregateSKNNQuery.Result> gnnkNEW(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk) {
         PriorityQueue<NNEntryExtended> queue = new PriorityQueue<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         queue.add(root);
 
-        List<GNNKQuery.Result> results = new ArrayList<>();
+        List<AggregateSKNNQuery.Result> results = new ArrayList<>();
 
         while (!queue.isEmpty() && results.size() < topk) {
             NNEntryExtended first = queue.poll();
             RtreeEntry rTreeEntry = (RtreeEntry) first.entry;
 
             if (rTreeEntry.isLeafEntry) {
-                results.add(new GNNKQuery.Result(first.entry.getIdentifier(), first.cost));
+                results.add(new AggregateSKNNQuery.Result(first.entry.getIdentifier(), first.cost));
             } else {
                 Node n = readNode(rTreeEntry.getIdentifier());
 //				System.out.println(first.cost + " " + n.level);
@@ -215,26 +217,24 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
         }
 
         Collections.sort(results);
+
         return results;
     }
 
-    /**
-     * @return A list of objects with size at most k,
-     * where objects are sorted according to the decreasing value of their costs.
-     */
-    public List<SGNNKQuery.Result> sgnnk(InvertedFile invertedFile, SGNNKQuery sgnnkQuery, int topk) {
+    @Override
+    public List<AggregateSKNNQuery.Result> sgnnkNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
         PriorityQueue<NNEntryExtended> queue = new PriorityQueue<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         queue.add(root);
 
-        List<SGNNKQuery.Result> results = new ArrayList<>();
+        List<AggregateSKNNQuery.Result> results = new ArrayList<>();
 
         while (queue.size() != 0 && results.size() < topk) {
             NNEntryExtended first = queue.poll();
             RtreeEntry rTreeEntry = (RtreeEntry) first.entry;
 
             if (rTreeEntry.isLeafEntry) {
-                results.add(new SGNNKQuery.Result(first.entry.getIdentifier(), first.cost, first.queryIndices));
+                results.add(new AggregateSKNNQuery.Result(first.entry.getIdentifier(), first.cost, first.queryIndices));
             } else {
                 Node n = readNode(rTreeEntry.getIdentifier());
                 numOfVisitedNodes++;
@@ -293,23 +293,21 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
         }
 
         Collections.sort(results);
+
         return results;
     }
 
-    /**
-     * @return A list of objects with size at most k,
-     * where objects are sorted according to the decreasing value of their costs.
-     */
-    public Map<Integer, List<SGNNKQuery.Result>> sgnnkExtended(InvertedFile invertedFile, SGNNKQuery sgnnkQuery, int topk) {
+    @Override
+    public Map<Integer, List<AggregateSKNNQuery.Result>> sgnnkExtendedNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
         PriorityQueue<NNEntryExtended> queue = new PriorityQueue<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0), null);
         queue.add(root);
 
-        Map<Integer, PriorityQueue<SGNNKQuery.Result>> topResults = new HashMap<>();
+        Map<Integer, PriorityQueue<AggregateSKNNQuery.Result>> topResults = new HashMap<>();
         for (int i = sgnnkQuery.subGroupSize; i <= sgnnkQuery.groupSize; i++) {
-            PriorityQueue<SGNNKQuery.Result> bestResults = new PriorityQueue<>(topk, new WorstFirstNNEntryComparator());
+            PriorityQueue<AggregateSKNNQuery.Result> bestResults = new PriorityQueue<>(topk, new WorstFirstNNEntryComparatorNEW());
             for (int j = 0; j < topk; j++) {
-                bestResults.add(new SGNNKQuery.Result(-1, new Cost(0, 0, Double.MAX_VALUE), null));
+                bestResults.add(new AggregateSKNNQuery.Result(-1, new Cost(0, 0, Double.MAX_VALUE), null));
             }
             topResults.put(i, bestResults);
         }
@@ -322,7 +320,7 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
             if (first.queryCosts != null) {
                 boolean pruneNode = true;
                 for (int i = 0; i < first.queryCosts.size(); i++) {
-                    double prunningBound = topResults.get(i + sgnnkQuery.subGroupSize).peek().cost.totalCost;
+                    double prunningBound = topResults.get(i + sgnnkQuery.subGroupSize).peek().aggregateCost.totalCost;
 //					System.out.println(prunningBound);
                     if (first.queryCosts.get(i).totalCost < prunningBound)
                         pruneNode = false;
@@ -378,12 +376,12 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
                     Cost queryCost = sgnnkQuery.aggregator.getAccumulatedValue();
                     aggregateQueryCosts.add(queryCost);
 
-                    PriorityQueue<SGNNKQuery.Result> bestResults = topResults.get(i + 1);
+                    PriorityQueue<AggregateSKNNQuery.Result> bestResults = topResults.get(i + 1);
                     List<Integer> queryIds = minimumCostQueryIds.subList(0, i + 1);
-                    if (queryCost.totalCost < bestResults.peek().cost.totalCost) {
+                    if (queryCost.totalCost < bestResults.peek().aggregateCost.totalCost) {
                         prune = false;
                         if (n.level == 0) {
-                            bestResults.add(new SGNNKQuery.Result(n.getChildIdentifier(child), queryCost, queryIds));
+                            bestResults.add(new AggregateSKNNQuery.Result(n.getChildIdentifier(child), queryCost, queryIds));
                             bestResults.poll();
                         }
 
@@ -400,24 +398,24 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
             }
         }
 
-        Map<Integer, List<SGNNKQuery.Result>> results = new HashMap<>();
+        Map<Integer, List<AggregateSKNNQuery.Result>> results = new HashMap<>();
         for (Integer subgroupSize : topResults.keySet()) {
-            List<SGNNKQuery.Result> result = new ArrayList<>(topResults.get(subgroupSize));
+            List<AggregateSKNNQuery.Result> result = new ArrayList<>(topResults.get(subgroupSize));
             Collections.sort(result);
             results.put(subgroupSize, result);
         }
+
         return results;
     }
 
-
     @Override
-    public List<BRQuery.Result> booleanRangeQuery(InvertedFile invertedFile, BRQuery query, float radius) {
+    public List<SKNNQuery.Result> booleanRangeQueryNEW(InvertedFile invertedFile, SKNNQuery query, float radius) {
         //PriorityQueue<NNEntry> queue = new PriorityQueue(100, new NNEntryComparator());
         PriorityQueue<NNEntry> queue = new PriorityQueue<>(new NNEntryComparatorMinDistance());
         RtreeEntry rtreeEntry = new RtreeEntry(rootID, false);
         queue.add(new NNEntry(rtreeEntry, 0.0));
 
-        List<BRQuery.Result> results = new ArrayList<>();
+        List<SKNNQuery.Result> results = new ArrayList<>();
 
         // TODO (DEBUG) REMOVE topk limit (10)
         while (!queue.isEmpty() /*&& results.size() < 10*/) {
@@ -428,7 +426,7 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
             if(rtreeEntry.isLeafEntry) {
                 if(radius < first.minDistance)
                     break;
-                results.add(new BRQuery.Result(first.node.getIdentifier(), first.minDistance));    //TODO FIX AND ADD DISTANCE
+                results.add(new SKNNQuery.Result(first.node.getIdentifier(), first.minDistance));    //TODO FIX AND ADD DISTANCE
             } else {
                 Node node = readNode(rtreeEntry.getIdentifier());
 
@@ -460,18 +458,19 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
 
         Collections.sort(results);
         log.info("Number of BRQ results: Radius = {} - Number: {}", radius, results.size());
+
         return results;
     }
 
     @Override
-    public List<BooleanKnnQuery.Result> booleanKnnQuery(InvertedFile invertedFile, BooleanKnnQuery query, int topk) {
+    public List<SKNNQuery.Result> booleanKnnQueryNEW(InvertedFile invertedFile, SKNNQuery query, int topk) {
         PriorityQueue<NNEntry> queue = new PriorityQueue<>(new NNEntryComparatorMinDistance());
         RtreeEntry rtreeEntry = new RtreeEntry(rootID, false);
         queue.add(new NNEntry(rtreeEntry, 0.0));
 
         int count = 0;
 
-        List<BooleanKnnQuery.Result> results = new ArrayList<>();
+        List<SKNNQuery.Result> results = new ArrayList<>();
 
         while (queue.size() != 0 && results.size() < topk) {
             NNEntry first = queue.poll();
@@ -479,7 +478,7 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
 
             if(rtreeEntry.isLeafEntry) {
                 count++;
-                results.add(new BooleanKnnQuery.Result(first.node.getIdentifier(), first.minDistance));
+                results.add(new SKNNQuery.Result(first.node.getIdentifier(), first.minDistance));
             } else {
                 Node node = readNode(rtreeEntry.getIdentifier());
                 HashMap<Integer, Integer> filter = invertedFile.booleanFilter(node.identifier, (ArrayList<Integer>) query.query.keywords);
@@ -509,11 +508,12 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
 
         Collections.sort(results);
         log.info("Number of BKQ results: K = {} - Number: {}", topk, results.size());
+
         return results;
     }
 
     @Override
-    public List<TopkKnnQuery.Result> topkKnnQuery(InvertedFile invertedFile, TopkKnnQuery query, int topk) {
+    public List<SKNNQuery.Result> topkKnnQueryNEW(InvertedFile invertedFile, SKNNQuery query, int topk) {
         PriorityQueue<NNEntry> queue = new PriorityQueue<>(new NNEntryComparatorMinDistance());
         RtreeEntry rtreeEntry = new RtreeEntry(rootID, false);
         queue.add(new NNEntry(rtreeEntry, 0.0));
@@ -521,7 +521,7 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
         int count = 0;
         double knearest = 0.0;
 
-        List<TopkKnnQuery.Result> results = new ArrayList<>();
+        List<SKNNQuery.Result> results = new ArrayList<>();
 
         while (!queue.isEmpty()) {
             NNEntry first = queue.poll();
@@ -534,7 +534,7 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
                     break;
 
                 count++;
-                results.add(new TopkKnnQuery.Result(rtreeEntry.getIdentifier(), first.cost, first.minDistance));
+                results.add(new SKNNQuery.Result(rtreeEntry.getIdentifier(), first.cost, first.minDistance));
                 knearest = first.cost;
             } else {
                 Node node = readNode(rtreeEntry.getIdentifier());
@@ -570,6 +570,7 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
         }
         Collections.sort(results);
         log.info("Number of TopK results: K = {} - Number: {}", topk, results.size());
+
         return results;
     }
 
@@ -613,21 +614,24 @@ public class DIRTree extends RTreeEnhanced implements ISpatioTextualIndex {
     }
 
 
+
+
     /**
      * Put the entry with highest cost first
      */
-    private class WorstFirstNNEntryComparator implements Comparator<AggregateQuery.Result> {
+    private class WorstFirstNNEntryComparatorNEW implements Comparator<AggregateSKNNQuery.Result> {
 
         @Override
-        public int compare(AggregateQuery.Result n1, AggregateQuery.Result n2) {
-            if (n1.cost.totalCost > n2.cost.totalCost)
+        public int compare(AggregateSKNNQuery.Result n1, AggregateSKNNQuery.Result n2) {
+            if (n1.aggregateCost.totalCost > n2.aggregateCost.totalCost)
                 return -1;
-            if (n1.cost.totalCost < n2.cost.totalCost)
+            if (n1.aggregateCost.totalCost < n2.aggregateCost.totalCost)
                 return 1;
             return 0;
         }
 
     }
+
 
     public int getVisitedNodes() {
         return numOfVisitedNodes;

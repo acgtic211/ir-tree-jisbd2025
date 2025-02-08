@@ -2,6 +2,11 @@ package org.ual;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ual.algorithm.aggregator.AggregatorFactory;
+import org.ual.algorithm.aggregator.IAggregator;
+import org.ual.spatialindex.parameters.Dataset;
+import org.ual.spatialindex.parameters.ParametersFactory;
+import org.ual.spatialindex.parameters.DatasetParameters;
 import org.ual.utils.ResultQueryTotal;
 import org.ual.utils.main.IndexLogic;
 import org.ual.utils.main.QueryLogic;
@@ -24,8 +29,8 @@ public class NewMain {
     static int numClusters = 4; // CIRtree clusters
     static int numMoves = 4; // KMean numMoves
 
-    static String keywordsFilePath = "src/main/resources/data/postal_doc.txt";
-    static String locationsFilePath = "src/main/resources/data/postal_loc.txt";
+//    static String keywordsFilePath = "src/main/resources/data/postal_doc.txt";
+//    static String locationsFilePath = "src/main/resources/data/postal_loc.txt";
 //    static String keywordsFilePath = "src/main/resources/data/sports_doc.txt";
 //    static String locationsFilePath = "src/main/resources/data/sports_loc.txt";
 //    static String keywordsFilePath = "src/main/resources/data/hotel_doc";
@@ -35,17 +40,45 @@ public class NewMain {
 //    static String keywordsFilePath = "src/main/resources/data/keywords.txt";
 //    static String locationsFilePath = "src/main/resources/data/locations.txt";
 
+    static DatasetParameters parameters;
+    static Dataset dataset;
+
     // Results and Temp paths
     static String tempDirectoryPath = "src/main/resources/temp/";
     static String resultsDirectoryPath = "src/main/resources/results/";
     static String metricsDirectoryPath = "src/main/resources/results/metrics/";
     static String logDirectoryPath = "src/main/resources/log/";
 
+    // Datastructures
+    enum DataStructureType {
+        HashMap,
+        TreeMap
+    }
+    static DataStructureType selectedDataStructure;
+
+    // Spatial Index Type
+    enum SpatialIndexType {
+        IR,
+        IR_Bulk,
+        DIR,
+        CIR,
+        CDIR
+    }
+    static SpatialIndexType selectedSpatialIndex;
+
+    enum QueryTypeGroup {
+        AGGREGATE,
+        RANGE,
+        KNN
+    }
+    static QueryTypeGroup selectedQueryTypeGroup;
+
+    static IAggregator selectedAggregator;
+
     // Specify aggregate query types to use
     static QueryLogic.AggregateQueryType[] aggregateQueryTypes = {
             QueryLogic.AggregateQueryType.GNNK,
             QueryLogic.AggregateQueryType.SGNNK };
-
 
     // Specify knn query types to use
     static QueryLogic.KnnQueryType[] knnQueryTypes = {
@@ -58,6 +91,19 @@ public class NewMain {
 
     // Specify join query types to use
     // TODO implement JOIN
+
+    enum QueryParameters {
+        GroupSize,
+        PercentQuery,
+        NumberOfKeywords,
+        SpaceAreaPercentage,
+        KeywordSpaceSizePercentage,
+        TopK,
+        Alpha,
+        Radius,
+        All
+    }
+    static QueryParameters selectedQueryParameter;
 
     // Number of keywords
     static int numberOfQueries = 20;
@@ -85,6 +131,7 @@ public class NewMain {
 
     private static final Logger logger = LogManager.getLogger(NewMain.class);
 
+
     public static void main(String[] argv) {
         // ****************************************************** //
         //                    CLEANING DATA                       //
@@ -102,39 +149,42 @@ public class NewMain {
         //                    PROCESSING DATA                     //
         // ****************************************************** //
 
-        // Statistics Logic
+        // Select Dataset
+        chooseDataSetMenu();
+
+        // Init Statistics Logic
         StatisticsLogic statisticsLogic = new StatisticsLogic(metricsDirectoryPath);
 
-        // Index Logic
-        IndexLogic indexLogic = new IndexLogic(statisticsLogic);
+        // Init Index Logic
+        IndexLogic indexLogic = new IndexLogic(statisticsLogic, parameters);
 
         // Select Document Index Structure Type & Compute weights and store in memory
-        String oper = printDataStructureMenu();
-        logger.info("Data Structure type: {}", oper);
+        chooseDocumentDataStructureMenu();
 
-        if (oper.equals("HashMap")){
-            indexLogic.createHashMapDS(keywordsFilePath);
-        } else if (oper.equals("TreeMap")){
-            indexLogic.createTreeMapDS(keywordsFilePath);
+        if (selectedDataStructure == DataStructureType.HashMap) {
+            indexLogic.createHashMapDS();
+        } else if (selectedDataStructure == DataStructureType.TreeMap) {
+            indexLogic.createTreeMapDS();
         } else {
-            logger.error("Data Structure type selected is invalid: {}", oper);
+            logger.error("Data Structure type selected is invalid: {}; exiting...", selectedDataStructure.toString());
             System.exit(-1);
         }
 
         // Select SpatialIndex Tree Type
-        oper = printSpatialTypeMenu();
-        logger.info("Spatial-Index Tree type: {}", oper);
+        chooseSpatialTypeMenu();
 
-        if(oper.equals("IR")) {
-            indexLogic.createIRtree(locationsFilePath, fanout, fillFactor, dimension);
-        } else if(oper.equals("DIR")) {
-            indexLogic.createDIRtree(locationsFilePath, fanout, fillFactor, dimension, maxWord, betaArea);
-        } else if(oper.equals("CIR")) {
-            indexLogic.createCIRtree(locationsFilePath, fanout, fillFactor, dimension, numClusters, numMoves);
-        } else if(oper.equals("CDIR")) {
-            indexLogic.createCDIRtree(locationsFilePath, fanout, fillFactor, dimension, maxWord, betaArea, numClusters, numMoves);
+        if(selectedSpatialIndex == SpatialIndexType.IR) {
+            indexLogic.createIRtree(fanout, fillFactor, dimension);
+        } else if(selectedSpatialIndex == SpatialIndexType.IR_Bulk) {
+            indexLogic.createIRtreeWithBulkLoading(fanout, fillFactor, dimension);// TODO expose more parameters
+        } else if(selectedSpatialIndex == SpatialIndexType.DIR) {
+            indexLogic.createDIRtree(fanout, fillFactor, dimension, maxWord, betaArea);
+        } else if(selectedSpatialIndex == SpatialIndexType.CIR) {
+            indexLogic.createCIRtree(fanout, fillFactor, dimension, numClusters, numMoves);
+        } else if(selectedSpatialIndex == SpatialIndexType.CDIR) {
+            indexLogic.createCDIRtree(fanout, fillFactor, dimension, maxWord, betaArea, numClusters, numMoves);
         } else {
-            logger.error("Invalid Spatial-Index type selected: {}", oper);
+            logger.error("Invalid Spatial-Index type selected: {}", selectedSpatialIndex.toString());
             System.exit(-1);
         }
 
@@ -143,7 +193,7 @@ public class NewMain {
         //                       QUERIES                          //
         // ****************************************************** //
 
-        QueryLogic queryLogic = new QueryLogic(indexLogic, statisticsLogic, resultsDirectoryPath, true);
+        QueryLogic queryLogic = new QueryLogic(indexLogic, statisticsLogic, resultsDirectoryPath, parameters, true);
         queryLogic.initQueryVariables(groupSizes, groupSizeDefault, mPercentages, mPercentageDefault, numberOfKeywords, numberOfKeywordsDefault,
                 querySpaceAreaPercentages, querySpaceAreaPercentageDefault, keywordSpaceSizePercentages, keywordSpaceSizePercentageDefault, topks, topkDefault,
                 alphas, alphaDefault, radius, radiusDefault, numberOfQueries);
@@ -152,166 +202,75 @@ public class NewMain {
 //        queryLogic.processKnnQuery(new QueryLogic.KnnQueryType[]{QueryLogic.KnnQueryType.BkSK});
 
         do {
-            // Launch Query Selector Menu
-            String querySelection = printQuerySelectorMenu();
-            logger.info("Selected Spatial Keyword Query type: {}", querySelection);
+            // Choose number of iterations
+            int numIterations = chooseNumberIterationsMenu();
+
+            // Launch Query Group Selector Menu
+            chooseQueryTypeGroupMenu();
 
 
             // ****************************************************** //
             //                      AGGREGATE                         //
             // ****************************************************** //
-            if (Objects.equals(querySelection, "AGGREGATE")) {
+            if (selectedQueryTypeGroup == QueryTypeGroup.AGGREGATE) {
                 // Launch Aggregator Menu
-                String aggregator = printAggregateMenu();
-                logger.info("Using aggregator: {}", aggregator);
-
+                chooseAggregateTypeMenu();
 
                 // Query generation and evaluation
                 // Result set
                 globalQueryResults = new ResultQueryTotal("Aggregate");
                 queryLogic.setQueryResults(globalQueryResults);
 
+                // Launch Query parameter Menu
                 ArrayList<QueryLogic.QueryType> queryTypes = new ArrayList<>(7);
-
-
-                // Launch Query Menu
-                String queryType = printAggregateQueryTypeMenu();
-                logger.info("Processing query type: {}", queryType);
-
-                switch (queryType) {
-                    case "GroupSize":
-                        queryTypes.add(QueryLogic.QueryType.GroupSize);
-                        break;
-                    case "PercentQuery":
-                        queryTypes.add(QueryLogic.QueryType.Percentage);
-                        break;
-                    case "NumKeywords":
-                        queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
-                        break;
-                    case "SpaceAreaPercentage":
-                        queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
-                        break;
-                    case "KeywordSpaceSizePercentage":
-                        queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
-                        break;
-                    case "TopK":
-                        queryTypes.add(QueryLogic.QueryType.TopK);
-                        break;
-                    case "Alpha":
-                        queryTypes.add(QueryLogic.QueryType.Alpha);
-                        break;
-                    case "All":
-                        queryTypes.add(QueryLogic.QueryType.GroupSize);
-                        queryTypes.add(QueryLogic.QueryType.Percentage);
-                        queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
-                        queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
-                        queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
-                        queryTypes.add(QueryLogic.QueryType.TopK);
-                        queryTypes.add(QueryLogic.QueryType.Alpha);
-                        break;
-                    default:
-                        logger.info("Exiting...");
-                        System.exit(0);
-                }
+                chooseAggregateQueryTypeMenu(queryTypes);
 
                 // Process aggregate queries
-                queryLogic.processAggregateQuery(aggregateQueryTypes, queryTypes, aggregator);
+                for (int i = 0; i < numIterations; i++) {
+                    queryLogic.processAggregateQuery(aggregateQueryTypes, queryTypes, selectedAggregator);
+                    queryLogic.printStats();
+                }
             }
+
 
             // ****************************************************** //
             //                         RANGE                          //
             // ****************************************************** //
-
-            if (Objects.equals(querySelection, "RANGE")) {
+            if (selectedQueryTypeGroup == QueryTypeGroup.RANGE) {
                 // Query generation and evaluation
                 // Result set
                 globalQueryResults = new ResultQueryTotal("Range");
                 queryLogic.setQueryResults(globalQueryResults);
 
+                // Launch Query parameter Menu
                 ArrayList<QueryLogic.QueryType> queryTypes = new ArrayList<>(7);
-
-                // Launch Query Menu
-                String queryType = printRangeQueryTypeMenu();
-                logger.info("Processing query type: {}", queryType);
-
-                switch (queryType) {
-                    case "NumKeywords":
-                        queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
-                        break;
-                    case "SpaceAreaPercentage":
-                        queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
-                        break;
-                    case "KeywordSpaceSizePercentage":
-                        queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
-                        break;
-                    case "Range":
-                        queryTypes.add(QueryLogic.QueryType.Radius);
-                        break;
-                    case "Alpha":
-                        queryTypes.add(QueryLogic.QueryType.Alpha);
-                        break;
-                    case "All":
-                        queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
-                        queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
-                        queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
-                        queryTypes.add(QueryLogic.QueryType.Radius);
-                        queryTypes.add(QueryLogic.QueryType.Alpha);
-                        break;
-                    default:
-                        logger.info("Exiting...");
-                        System.exit(0);
-                }
+                chooseRangeQueryTypeMenu(queryTypes);
 
                 // Process aggregate queries
-                queryLogic.processRangeQuery(rangeQueryTypes, queryTypes);
+                for(int i = 0; i < numIterations; i++) {
+                    queryLogic.processRangeQuery(rangeQueryTypes, queryTypes);
+                    queryLogic.printStats();
+                }
             }
 
             // ****************************************************** //
             //                         KNN                            //
             // ****************************************************** //
-
-            if (Objects.equals(querySelection, "KNN")) {
+            if (selectedQueryTypeGroup == QueryTypeGroup.KNN) {
                 // Query generation and evaluation
                 // Result set
                 globalQueryResults = new ResultQueryTotal("KNN");
                 queryLogic.setQueryResults(globalQueryResults);
 
-                ArrayList<QueryLogic.QueryType> queryTypes = new ArrayList<>(7);
-
                 // Launch Query Menu
-                String queryType = printKnnQueryTypeMenu();
-                logger.info("Processing query type: {}", queryType);
-
-                switch (queryType) {
-                    case "NumKeywords":
-                        queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
-                        break;
-                    case "SpaceAreaPercentage":
-                        queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
-                        break;
-                    case "KeywordSpaceSizePercentage":
-                        queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
-                        break;
-                    case "TopK":
-                        queryTypes.add(QueryLogic.QueryType.TopK);
-                        break;
-                    case "Alpha":
-                        queryTypes.add(QueryLogic.QueryType.Alpha);
-                        break;
-                    case "All":
-                        queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
-                        queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
-                        queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
-                        queryTypes.add(QueryLogic.QueryType.TopK);
-                        queryTypes.add(QueryLogic.QueryType.Alpha);
-                        break;
-                    default:
-                        logger.info("Exiting...");
-                        System.exit(0);
-                }
+                ArrayList<QueryLogic.QueryType> queryTypes = new ArrayList<>(7);
+                chooseKnnQueryTypeMenu(queryTypes);
 
                 // Process aggregate queries
-                queryLogic.processKnnQuery(knnQueryTypes, queryTypes);
+                for(int i = 0; i < numIterations; i++) {
+                    queryLogic.processKnnQuery(knnQueryTypes, queryTypes);
+                    queryLogic.printStats();
+                }
             }
 
 
@@ -319,7 +278,9 @@ public class NewMain {
             logger.info(" All queries have been evaluated ");
             logger.info("---------------------------------");
 
-            queryLogic.printStats();
+            //queryLogic.printStats();
+
+
 
 //            logger.info("Query Times:");
 //            for (long time : memTimes)
@@ -345,7 +306,7 @@ public class NewMain {
 
         logger.info("Exiting...");
 
-        } while (printExitLoopMenu());
+        } while (chooseExitLoopMenu());
 
     }
 
@@ -354,7 +315,50 @@ public class NewMain {
     //                              MENUS                               //
     //******************************************************************//
 
-    public static String printDataStructureMenu() {
+    public static void chooseDataSetMenu() {
+        System.out.println("\nChoose dataset:");
+        System.out.println("-------------------------\n");
+        System.out.println("\t1 - Postal codes");
+        System.out.println("\t2 - Sports");
+        System.out.println("\t3 - Hotel");
+        System.out.println("\t4 - Test");
+        System.out.println("\t");
+        System.out.println("\t0 - Quit");
+        System.out.println("-------------------------\n");
+
+        // Start Simple Menu
+        Scanner input = new Scanner(System.in);
+
+        // Aggregator selection
+        int selection = input.nextInt();
+
+        switch (selection) {
+            case 1:
+                dataset = Dataset.POSTAL_CODES_SET;
+                parameters = ParametersFactory.getParameters(dataset);
+                break;
+            case 2:
+                dataset = Dataset.SPORTS_SET;
+                parameters = ParametersFactory.getParameters(Dataset.SPORTS_SET);
+                break;
+            case 3:
+                dataset = Dataset.HOTEL_SET;
+                parameters = ParametersFactory.getParameters(Dataset.HOTEL_SET);
+                break;
+            case 4:
+                dataset = Dataset.TESTING_SET;
+                parameters = ParametersFactory.getParameters(Dataset.TESTING_SET);
+                break;
+            default:
+                logger.error("Wrong dataset selected. Exiting...");
+                System.exit(0);
+        }
+
+        logger.info("Dataset selected: {}", dataset.toString());
+    }
+
+
+    public static void chooseDocumentDataStructureMenu() {
         System.out.println("\nChoose document index type:");
         System.out.println("-------------------------\n");
         System.out.println("\t1 - HashMap");
@@ -365,64 +369,68 @@ public class NewMain {
 
         // Start Simple Menu
         Scanner input = new Scanner(System.in);
-        String oper = "";
 
         // Aggregator selection
         int selection = input.nextInt();
 
         switch (selection) {
             case 1:
-                oper = "HashMap";
+                selectedDataStructure = DataStructureType.HashMap;
                 break;
             case 2:
-                oper = "TreeMap";
+                selectedDataStructure = DataStructureType.TreeMap;
                 break;
             default:
+                logger.error("Wrong document index type selected. Exiting...");
                 System.exit(0);
         }
 
-        return oper;
+        logger.info("Document index type selected: {}", selectedDataStructure.toString());
     }
 
-    public static String printSpatialTypeMenu() {
+
+    public static void chooseSpatialTypeMenu() {
         System.out.println("\nChoose Spatio-Textual tree type");
         System.out.println("-------------------------\n");
         System.out.println("\t1 - IR-Tree");
-        System.out.println("\t2 - DIR-Tree");
-        System.out.println("\t3 - CIR-Tree");
-        System.out.println("\t4 - CDIR-Tree");
+        System.out.println("\t2 - IR-Tree with Bulk Loading");
+        System.out.println("\t3 - DIR-Tree");
+        System.out.println("\t4 - CIR-Tree");
+        System.out.println("\t5 - CDIR-Tree");
         System.out.println("\t");
         System.out.println("\t0 - Quit");
         System.out.println("-------------------------\n");
 
         // Start Simple Menu
         Scanner input = new Scanner(System.in);
-        String oper = "";
 
         // Tree selection
         int selection = input.nextInt();
 
         switch (selection) {
             case 1:
-                oper = "IR";
+                selectedSpatialIndex = SpatialIndexType.IR;
                 break;
             case 2:
-                oper = "DIR";
+                selectedSpatialIndex = SpatialIndexType.IR_Bulk;
                 break;
             case 3:
-                oper = "CIR";
+                selectedSpatialIndex = SpatialIndexType.DIR;
                 break;
             case 4:
-                oper = "CDIR";
+                selectedSpatialIndex = SpatialIndexType.CIR;
+                break;
+            case 5:
+                selectedSpatialIndex = SpatialIndexType.CDIR;
                 break;
             default:
+                logger.error("Wrong Spatio-Textual tree type selected. Exiting...");
                 System.exit(0);
         }
-
-        return oper;
+        logger.info("Spatio-Textual tree type selected: {}", selectedSpatialIndex.toString());
     }
 
-    public static String printQuerySelectorMenu() {
+    public static void chooseQueryTypeGroupMenu() {
         System.out.println("\nChoose Spatial Query type");
         System.out.println("-------------------------\n");
         System.out.println("\t1 - Aggregate SK");
@@ -434,29 +442,28 @@ public class NewMain {
 
         // Start Simple Menu
         Scanner input = new Scanner(System.in);
-        String query = "";
 
         // Aggregator selection
         int selection = input.nextInt();
 
         switch (selection) {
             case 1:
-                query = "AGGREGATE";
+                selectedQueryTypeGroup = QueryTypeGroup.AGGREGATE;
                 break;
             case 2:
-                query = "RANGE";
+                selectedQueryTypeGroup = QueryTypeGroup.RANGE;
                 break;
             case 3:
-                query = "KNN";
+                selectedQueryTypeGroup = QueryTypeGroup.KNN;
                 break;
             default:
+                logger.error("Wrong Spatial Query type selected. Exiting...");
                 System.exit(0);
         }
-
-        return query;
+        logger.info("Spatial Query type selected: {}", selectedQueryTypeGroup.toString());
     }
 
-    public static String printAggregateMenu() {
+    public static void chooseAggregateTypeMenu() {
         System.out.println("\nChoose aggregator type");
         System.out.println("-------------------------\n");
         System.out.println("\t1 - SUM");
@@ -475,19 +482,22 @@ public class NewMain {
         switch (selection) {
             case 1:
                 aggregator = "SUM";
+                selectedAggregator = AggregatorFactory.getAggregator(aggregator);
                 break;
             case 2:
                 aggregator = "MAX";
+                selectedAggregator = AggregatorFactory.getAggregator(aggregator);
                 break;
             default:
+                logger.error("Wrong aggregator type selected. Exiting...");
                 System.exit(0);
         }
-
-        return aggregator;
+        logger.info("Aggregator type selected: {}", aggregator);
     }
 
-    public static String printAggregateQueryTypeMenu() {
-        System.out.println("\nChoose query type");
+
+    public static void chooseAggregateQueryTypeMenu(ArrayList<QueryLogic.QueryType> queryTypes) {
+        System.out.println("\nChoose query parameter for Aggregate Query");
         System.out.println("-------------------------\n");
         System.out.println("\t1 - Group Size");
         System.out.println("\t2 - Percent");
@@ -504,45 +514,58 @@ public class NewMain {
 
         // Start Simple Menu
         Scanner input = new Scanner(System.in);
-        String oper = "";
 
         // Aggregator selection
         int selection = input.nextInt();
 
         switch (selection) {
             case 1:
-                oper = "GroupSize";
+                queryTypes.add(QueryLogic.QueryType.GroupSize);
+                selectedQueryParameter = QueryParameters.GroupSize;
                 break;
             case 2:
-                oper = "PercentQuery";
+                queryTypes.add(QueryLogic.QueryType.Percentage);
+                selectedQueryParameter = QueryParameters.PercentQuery;
                 break;
             case 3:
-                oper = "NumKeywords";
+                queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
+                selectedQueryParameter = QueryParameters.NumberOfKeywords;
                 break;
             case 4:
-                oper = "SpaceAreaPercentage";
+                queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
+                selectedQueryParameter = QueryParameters.SpaceAreaPercentage;
                 break;
             case 5:
-                oper = "KeywordSpaceSizePercentage";
+                queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
+                selectedQueryParameter = QueryParameters.KeywordSpaceSizePercentage;
                 break;
             case 6:
-                oper = "TopK";
+                queryTypes.add(QueryLogic.QueryType.TopK);
+                selectedQueryParameter = QueryParameters.TopK;
                 break;
             case 7:
-                oper = "Alpha";
+                queryTypes.add(QueryLogic.QueryType.Alpha);
+                selectedQueryParameter = QueryParameters.Alpha;
                 break;
             case 8:
-                oper = "All";
+                queryTypes.add(QueryLogic.QueryType.GroupSize);
+                queryTypes.add(QueryLogic.QueryType.Percentage);
+                queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
+                queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
+                queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
+                queryTypes.add(QueryLogic.QueryType.TopK);
+                queryTypes.add(QueryLogic.QueryType.Alpha);
+                selectedQueryParameter = QueryParameters.All;
                 break;
             default:
+                logger.error("Wrong query parameter selected for aggregate queries. Exiting...");
                 System.exit(0);
         }
-
-        return oper;
+        logger.info("Query parameter selected for Aggregate: {}", selectedQueryParameter.toString());
     }
 
-    public static String printRangeQueryTypeMenu() {
-        System.out.println("\nChoose query type");
+    public static void chooseRangeQueryTypeMenu(ArrayList<QueryLogic.QueryType> queryTypes) {
+        System.out.println("\nChoose query parameter for Range Query");
         System.out.println("-------------------------\n");
         System.out.println("\t1 - Number of Keywords");
         System.out.println("\t2 - Space Area Percentage");
@@ -557,39 +580,49 @@ public class NewMain {
 
         // Start Simple Menu
         Scanner input = new Scanner(System.in);
-        String oper = "";
 
         // Aggregator selection
         int selection = input.nextInt();
 
         switch (selection) {
             case 1:
-                oper = "NumKeywords";
+                queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
+                selectedQueryParameter = QueryParameters.NumberOfKeywords;
                 break;
             case 2:
-                oper = "SpaceAreaPercentage";
+                queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
+                selectedQueryParameter = QueryParameters.SpaceAreaPercentage;
                 break;
             case 3:
-                oper = "KeywordSpaceSizePercentage";
+                queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
+                selectedQueryParameter = QueryParameters.KeywordSpaceSizePercentage;
                 break;
             case 4:
-                oper = "Range";
+                queryTypes.add(QueryLogic.QueryType.Radius);
+                selectedQueryParameter = QueryParameters.Radius;
                 break;
             case 5:
-                oper = "Alpha";
+                queryTypes.add(QueryLogic.QueryType.Alpha);
+                selectedQueryParameter = QueryParameters.Alpha;
                 break;
             case 6:
-                oper = "All";
+                queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
+                queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
+                queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
+                queryTypes.add(QueryLogic.QueryType.Radius);
+                queryTypes.add(QueryLogic.QueryType.Alpha);
+                selectedQueryParameter = QueryParameters.All;
                 break;
             default:
+                logger.error("Wrong query parameter selected for range queries. Exiting...");
                 System.exit(0);
         }
-
-        return oper;
+        logger.info("Query parameter selected for Range: {}", selectedQueryParameter.toString());
     }
 
-    public static String printKnnQueryTypeMenu() {
-        System.out.println("\nChoose query type");
+
+    public static void chooseKnnQueryTypeMenu(ArrayList<QueryLogic.QueryType> queryTypes) {
+        System.out.println("\nChoose query parameter for KNN Query");
         System.out.println("-------------------------\n");
         System.out.println("\t1 - Number of Keywords");
         System.out.println("\t2 - Space Area Percentage");
@@ -604,38 +637,59 @@ public class NewMain {
 
         // Start Simple Menu
         Scanner input = new Scanner(System.in);
-        String oper = "";
 
         // Aggregator selection
         int selection = input.nextInt();
 
         switch (selection) {
             case 1:
-                oper = "NumKeywords";
+                queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
+                selectedQueryParameter = QueryParameters.NumberOfKeywords;
                 break;
             case 2:
-                oper = "SpaceAreaPercentage";
+                queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
+                selectedQueryParameter = QueryParameters.SpaceAreaPercentage;
                 break;
             case 3:
-                oper = "KeywordSpaceSizePercentage";
+                queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
+                selectedQueryParameter = QueryParameters.KeywordSpaceSizePercentage;
                 break;
             case 4:
-                oper = "TopK";
+                queryTypes.add(QueryLogic.QueryType.TopK);
+                selectedQueryParameter = QueryParameters.TopK;
                 break;
             case 5:
-                oper = "Alpha";
+                queryTypes.add(QueryLogic.QueryType.Alpha);
+                selectedQueryParameter = QueryParameters.Alpha;
                 break;
             case 6:
-                oper = "All";
+                queryTypes.add(QueryLogic.QueryType.NumberOfKeywords);
+                queryTypes.add(QueryLogic.QueryType.SpaceAreaPercentage);
+                queryTypes.add(QueryLogic.QueryType.KeywordSpaceSizePercentage);
+                queryTypes.add(QueryLogic.QueryType.TopK);
+                queryTypes.add(QueryLogic.QueryType.Alpha);
+                selectedQueryParameter = QueryParameters.All;
                 break;
             default:
+                logger.error("Wrong query parameter selected for knn queries. Exiting...");
                 System.exit(0);
         }
-
-        return oper;
+        logger.info("Query parameter selected for KNN: {}", selectedQueryParameter.toString());
     }
 
-    private static boolean printExitLoopMenu() {
+    private static int chooseNumberIterationsMenu() {
+        System.out.println("\nInsert number of iterations: ");
+
+        // Start Simple Menu
+        Scanner input = new Scanner(System.in);
+
+        // Number of iterations selection
+        int selection = input.nextInt();
+
+        return selection;
+    }
+
+    private static boolean chooseExitLoopMenu() {
         System.out.println("\nGenerate another query?");
         System.out.println("-------------------------\n");
         System.out.println("\t 1 - Yes");

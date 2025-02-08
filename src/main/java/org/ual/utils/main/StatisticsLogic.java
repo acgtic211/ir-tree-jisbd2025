@@ -3,6 +3,7 @@ package org.ual.utils.main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ual.utils.ResultQueryTotal;
+import org.ual.utils.io.StatisticsResultWriter;
 import org.ual.utils.stats.QueryStats;
 import org.ual.utils.stats.QueryStatsData;
 
@@ -79,6 +80,8 @@ public class StatisticsLogic {
 //        StatisticsResultWriter.resultWriter(globalQueryResults.topks, "topk", globalQueryResults.queryType, metricsDirectoryPath);
 //        StatisticsResultWriter.resultWriter(globalQueryResults.radii, "range", globalQueryResults.queryType, metricsDirectoryPath);
 //        StatisticsResultWriter.resultWriter(globalQueryResults.alphas, "alpha", globalQueryResults.queryType, metricsDirectoryPath);
+
+        //StatisticsResultWriter.resultWriter(queriesStats, metricsDirectoryPath, true);
 
         StatisticsLogic.resultWriter(queriesStats, metricsDirectoryPath, true);
         StatisticsLogic.resultWriter(queriesStats, metricsDirectoryPath, false);
@@ -171,36 +174,70 @@ public class StatisticsLogic {
         ArrayList<String> row = new ArrayList<>();
         boolean writeHeaders = true;
 
-        //HashMap<String, HashMap<String, String>> values = new HashMap<>();
-        HashMap<String, ArrayList<String>> values = new HashMap<>();
-        // paramName, paramVal, paramVal, ...
-        // queryName, val, val, ...
-
         for (QueryStatsData resultData : qryData) {
             headers.add(resultData.value);
             row.add(String.valueOf(resultData.totalTime));
-
-            // Check if file exist to skip writing headers
-            File file = new File(metricsDirectoryPath + fileName + ".csv");
-            if (file.exists())
-                writeHeaders = false;
-
-            try (FileWriter fw = new FileWriter(metricsDirectoryPath + fileName + ".csv", true);
-                 BufferedWriter bw = new BufferedWriter(fw);
-                 PrintWriter out = new PrintWriter(bw)) {
-
-                // Write headers
-                if (writeHeaders)
-                    out.println(String.join(",", headers));
-
-                // Write rows
-                out.println(String.join(",", row));
-
-            } catch (IOException e) {
-                logger.error("Fail to write results", e);
-            }
-
         }
 
+        // Check if file exist to skip writing headers
+        File file = new File(metricsDirectoryPath + fileName + ".csv");
+        if (file.exists())
+            writeHeaders = false;
+
+        try (FileWriter fw = new FileWriter(metricsDirectoryPath + fileName + ".csv", true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+
+            // Write headers
+            if (writeHeaders)
+                out.println(String.join(",", headers));
+
+            // Write rows
+            out.println(String.join(",", row));
+
+        } catch (IOException e) {
+            logger.error("Fail to write results in csv: ", e);
+        }
+
+
     }
+
+
+//    private static void writeCSV(String metricsDirectoryPath, String fileName, List<QueryStatsData> qryData) {
+//        ArrayList<String> headers = new ArrayList<>();
+//        ArrayList<String> row = new ArrayList<>();
+//        boolean writeHeaders = true;
+//
+//        //HashMap<String, HashMap<String, String>> values = new HashMap<>();
+//        HashMap<String, ArrayList<String>> values = new HashMap<>();
+//        // paramName, paramVal, paramVal, ...
+//        // queryName, val, val, ...
+//
+//        for (QueryStatsData resultData : qryData) {
+//            headers.add(resultData.value);
+//            row.add(String.valueOf(resultData.totalTime));
+//
+//            // Check if file exist to skip writing headers
+//            File file = new File(metricsDirectoryPath + fileName + ".csv");
+//            if (file.exists())
+//                writeHeaders = false;
+//
+//            try (FileWriter fw = new FileWriter(metricsDirectoryPath + fileName + ".csv", true);
+//                 BufferedWriter bw = new BufferedWriter(fw);
+//                 PrintWriter out = new PrintWriter(bw)) {
+//
+//                // Write headers
+//                if (writeHeaders)
+//                    out.println(String.join(",", headers));
+//
+//                // Write rows
+//                out.println(String.join(",", row));
+//
+//            } catch (IOException e) {
+//                logger.error("Fail to write results", e);
+//            }
+//
+//        }
+//
+//    }
 }
