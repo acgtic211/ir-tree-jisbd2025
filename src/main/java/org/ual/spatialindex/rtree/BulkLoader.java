@@ -7,373 +7,223 @@ import java.util.*;
 
 public class BulkLoader {
 
-    public void bulkLoadUsingSTR(RTree rTree, ArrayList<RTree.Data> streamData, int index, int leaf, int pageSize, int numberOfPages){
-        Iterator<RTree.Data> stream = streamData.iterator();
+    public void bulkLoadUsingSTR(RTree rTree, ArrayList<RTree.Data> spatialData, int index, int leaf){
+        if(spatialData.isEmpty())
+            throw new IllegalArgumentException("BulkLoadUsingSTR: spatialData cannot be empty");
 
-        if (! stream.hasNext())
-            throw new IllegalArgumentException("RTree::BulkLoader::bulkLoadUsingSTR: Empty data stream given.");
-
+        // Read the root node and delete it.
         Node n = rTree.readNode(rTree.rootID);
         rTree.deleteNode(n);
 
-        ExternalSorter es = new ExternalSorter(pageSize, numberOfPages);
+        // Initialize the first sorter.
+        ExternalSorter firstSorter = new ExternalSorter();
 
-        while (stream.hasNext()) {
-            RTree.Data d = stream.next();
-            if (d == null)
-                throw new IllegalArgumentException("bulkLoadUsingSTR: RTree bulk load expects SpatialIndex::RTree::Data entries.");
-
-            es.insert(new Record(d.shape, d.id, d.data, 0));
+        // Insert all data entries into de first sorter (root)
+        for(RTree.Data data : spatialData) {
+            firstSorter.insert(new Record(data.shape, data.id, data.data, 0));
         }
-        es.sort();
+        // Sort the first sorter.
+        firstSorter.sort();
 
-        rTree.stats.data = es.getTotalEntries();
+        // Update the statistics.
+        rTree.stats.data = firstSorter.getTotalEntries();
 
-        // create index levels.
+        // Create the rest of the levels (leafs).
         int level = 0;
 
+        // The first level is a leaf level.
         while (true) {
             rTree.stats.nodesInLevel.add(0);
 
-            ExternalSorter es2 = new ExternalSorter(pageSize, numberOfPages);
-            createLevel(rTree, es, 0, leaf, index, level++, es2, pageSize, numberOfPages);
-            es = es2;
+            // Create a new sorter for the next level.
+            ExternalSorter secondSorter = new ExternalSorter();
+            // Create the next level.
+            createLevel(rTree, firstSorter, 0, leaf, index, level++, secondSorter);
+            // Overwrite the first sorter with the second sorter.
+            firstSorter = secondSorter;
 
-            if (es.getTotalEntries() == 1)
+            // If the first sorter has only one entry, then we are done.
+            if (firstSorter.getTotalEntries() == 1)
                 break;
 
-            es.sort();
+            // Sort the first sorter.
+            firstSorter.sort();
         }
 
+        // Update the statistics with the tree height.
         rTree.stats.treeHeight = level;
-        //rTree.storeHeader();
     }
 
 
-    protected void createLevel(RTree rTree, ExternalSorter es, int dimension, int leaf, int index, int level,
-            ExternalSorter es2, int pageSize, int numberOfPages) {
+    protected void createLevel(RTree rTree, ExternalSorter firstSorter, int dimension, int leaf, int index, int level,
+            ExternalSorter secondSorter) {
+        // b is set to leaf or index depending on the level.
         int b = (level == 0) ? leaf : index; // b = branching factor.
-        int P = (int)(Math.ceil((double)(es.getTotalEntries()) / (double)(b))); // P = number of nodes in this level.
-        int S = (int)(Math.ceil(Math.sqrt((double)(P)))); // S = number of nodes in a stripe.
+        // P = number of nodes in this level, calculated by the total number of entries divided by the branching factor.
+        int P = (int)(Math.ceil((double)(firstSorter.getTotalEntries()) / (double)(b))); // P = number of nodes in this level.
+        // S = number of nodes in a stripe, calculated by the square root of P.
+        int S = (int)(Math.ceil(Math.sqrt(P))); // S = number of nodes in a stripe.
 
-        if (S == 1 || dimension == rTree.dimension - 1 || S * b == es.getTotalEntries()) {
+        // Leaf Level or Last Dimension
+        // If S is 1, the current dimension is the last dimension, or the total entries exactly fit into the nodes
+        if (S == 1 || dimension == rTree.dimension - 1 || S * b == firstSorter.getTotalEntries()) {
             ArrayList<Record> nodeRecords = new ArrayList<>();
-            Record r;
+            Record record;
 
+            // Iterate over all records in the first sorter, adding them to the node records.
             while (true) {
-                r = es.getNextRecord();
-                if (r == null)
+                // Get the next record.
+                record = firstSorter.getNextRecord();
+                if (record == null)
                     break;
 
-                nodeRecords.add(r);
+                // Add the record to the node records.
+                nodeRecords.add(record);
 
+                // If the node size is equal to the branching factor, then create a new node.
                 if (nodeRecords.size() == b) {
-                    Node n = createNode(rTree, nodeRecords, level);
+                    Node node = createNode(rTree, nodeRecords, level);
                     nodeRecords.clear();
-                    rTree.writeNode(n);
-                    es2.insert(new Record(n.nodeMBR, n.identifier,null, 0));
-                    rTree.rootID = n.identifier;
+                    rTree.writeNode(node);
+                    secondSorter.insert(new Record(node.nodeMBR, node.identifier,null, 0));
+                    rTree.rootID = node.identifier;
                     // special case when the root has exactly index entries.
                 }
             }
 
+            // If there are any remaining records, then create a new node.
             if (! nodeRecords.isEmpty()) {
-                Node n = createNode(rTree, nodeRecords, level);
-                rTree.writeNode(n);
-                es2.insert(new Record(n.nodeMBR, n.identifier, null, 0));
-                rTree.rootID = n.identifier;
+                Node node = createNode(rTree, nodeRecords, level);
+                rTree.writeNode(node);
+                secondSorter.insert(new Record(node.nodeMBR, node.identifier, null, 0));
+                rTree.rootID = node.identifier;
             }
         } else {
+            // If the conditions for direct processing are not met, create levels recursively. (not root or leaf)
             boolean more = true;
 
             while(more) {
-                Record pR;
-                ExternalSorter es3 = new ExternalSorter(pageSize, numberOfPages);
+                Record record;
+                ExternalSorter thirdSorter = new ExternalSorter();
 
+                // Create the stripes.
                 for (int i = 0; i < S * b; ++i) {
-                    pR = es.getNextRecord();
-                    if (pR == null) {
+                    record = firstSorter.getNextRecord();
+                    if (record == null) {
                         more = false;
                         break;
                     }
 
-                    pR.m_s = dimension + 1;
-                    es3.insert(pR);
+                    record.sortingDimension = dimension + 1;
+                    thirdSorter.insert(record);
                 }
-                es3.sort();
-                createLevel(rTree, es3, dimension + 1, leaf, index, level, es2, pageSize, numberOfPages);
+                thirdSorter.sort();
+                createLevel(rTree, thirdSorter, dimension + 1, leaf, index, level, secondSorter);
             }
         }
     }
 
 
-    protected Node createNode(RTree rTree, ArrayList<Record> e, int level) {
-        Node n;
+    protected Node createNode(RTree rTree, ArrayList<Record> records, int level) {
+        Node node;
 
+        // Create a leaf or an index node.
         if (level == 0)
-            n = new Leaf(rTree, -1);
+            node = new Leaf(rTree, -1);
         else
-            n = new Index(rTree, -1, level);
+            node = new Index(rTree, -1, level);
 
-        for (int cChild = 0; cChild < e.size(); ++cChild) {
-            n.insertEntry(e.get(cChild).m_pData, e.get(cChild).m_r, e.get(cChild).m_id);
+        // Insert all records into the node.
+        for (Record record : records) {
+            node.insertEntry(record.nodeData, record.region, record.id);
         }
 
-        e.clear();
+        records.clear();  // clear the records vector.
 
-        return n;
-    }
-
-    protected class TemporaryStorage {
-        private LinkedList<Record> m_buffer;
-
-        TemporaryStorage() {
-            m_buffer = new LinkedList<>();
-        }
-
-        public boolean eof() {
-            return m_buffer.isEmpty();
-        }
-
-        public Record get() {
-            return m_buffer.poll();
-        }
+        return node;
     }
 
 
     protected class ExternalSorter {
-        private boolean m_bInsertionPhase;
-        private int m_pageSize;
-        private int m_bufferPages;
-        private TemporaryStorage m_sortedFile = new TemporaryStorage();
-        private ArrayList<TemporaryStorage> m_runs =  new ArrayList<>();
-        private ArrayList<Record> m_buffer = new ArrayList<>();//vector<Record>
-        private int m_totalEntries;
-        private int m_stI;
+        private boolean insertionPhase;
+        private LinkedList<Record> sortedRecords = new LinkedList<>();
+        private ArrayList<Record> buffer = new ArrayList<>();//vector<Record>
+        private int totalEntries;
+        private int stI;
 
-        public ExternalSorter(int u32PageSize, int u32BufferPages) {
-            this.m_bInsertionPhase = true;
-            this.m_pageSize = u32PageSize;
-            this.m_bufferPages = u32BufferPages;
-            this.m_totalEntries = 0;
-            this.m_stI = 0;
+        public ExternalSorter() {
+            this.insertionPhase = true;
+            this.totalEntries = 0;
+            this.stI = 0;
         }
 
-        public void insert(Record r) {
-            if (m_bInsertionPhase == false)
+        public void insert(Record record) {
+            if (insertionPhase == false)
                 throw new IllegalStateException("ExternalSorter::insert: Input has already been sorted.");
 
-            m_buffer.add(r);
-            ++m_totalEntries;
-
-            // this will create the initial, sorted buckets before the
-            // external merge sort.
-            if (m_buffer.size() >= m_pageSize * m_bufferPages) {
-                Collections.sort(m_buffer);
-                TemporaryStorage tf = new TemporaryStorage();
-                for (int j = 0; j < m_buffer.size(); ++j) {
-                    m_buffer.get(j).storeToFile(tf);
-                }
-                m_buffer.clear();
-                m_runs.add(tf);
-            }
+            buffer.add(record); // add the record to the buffer.
+            ++totalEntries; // increment the total number of entries.
         }
 
         public void sort() {
-            if (m_bInsertionPhase == false)
-                throw new IllegalStateException("ExternalSorter::sort: Input has already been sorted.");
+            if (insertionPhase == false)
+                throw new IllegalStateException("ExternalSorter.sort: Input has already been sorted.");
 
-            if (m_runs.isEmpty()) {
-                // The data fits in main memory. No need to store to disk.
-                Collections.sort(m_buffer);
-                m_bInsertionPhase = false;
-                return;
-            }
-
-            if (m_buffer.size() > 0) {
-                // Whatever remained in the buffer (if not filled) needs to be stored
-                // as the final bucket.
-                Collections.sort(m_buffer);
-                TemporaryStorage tf = new TemporaryStorage();
-                for (int j = 0; j < m_buffer.size(); ++j) {
-                    m_buffer.get(j).storeToFile(tf);
-                }
-                m_buffer.clear();
-                m_runs.add(tf);
-            }
-
-            if (m_runs.size() == 1) {
-                m_sortedFile = m_runs.get(0);
-            } else {
-                Record r = null;
-
-                while (m_runs.size() > 1) {
-                    TemporaryStorage tf = new TemporaryStorage();
-                    ArrayList<TemporaryStorage> buckets = new ArrayList<>(); // vector
-                    ArrayList<Queue<Record>> buffers = new ArrayList<>(); // vector
-                    PriorityQueue<PQEntry> pq = new PriorityQueue<>(); //vector
-
-                    // initialize buffers and priority queue.
-                    Iterator<TemporaryStorage> it = m_runs.iterator();//begin();
-                    int counter = 0;
-
-                    while (it.hasNext()) {
-                        TemporaryStorage ts = it.next();//new
-                        buckets.add(ts);
-                        buffers.add(new LinkedList<>());//Queue<Record>());
-
-                        r = new Record();
-                        r.loadFromFile(ts);//it);
-                        // a run cannot be empty initially, so this should never fail.
-                        pq.add(new PQEntry(r, counter));
-
-                        for (int j = 0; j < m_pageSize - 1; ++j) {
-                            // fill the buffer with the rest of the page of records.
-                            r = new Record();
-                            if(r.loadFromFile(ts))
-                                break;
-                            buffers.get(buffers.size() - 1).add(r);
-                        }
-                        counter++;
-                    }
-
-                    // exhaust buckets, buffers, and priority queue.
-                    while (! pq.isEmpty()) {
-                        PQEntry e = pq.poll();
-                        e.m_r.storeToFile(tf);
-
-                        if (! buckets.get(e.m_index).eof() && buffers.get(e.m_index).isEmpty()) {
-                            for (int j = 0; j < m_pageSize; ++j) {
-                                r = new Record();
-                                if(r.loadFromFile(buckets.get(e.m_index)))
-                                    break;
-                                buffers.get(e.m_index).add(r);
-                            }
-                        }
-
-                        if (! buffers.get(e.m_index).isEmpty()) {
-                            e.m_r = buffers.get(e.m_index).poll();
-                            pq.add(e);
-                        }
-                    }
-
-                    // check if another pass is needed.
-                    int count = Math.min((int)(m_runs.size()), m_bufferPages);
-                    for (int i = 0; i < count; ++i) {
-                        m_runs.remove(0);
-                    }
-
-                    if (m_runs.size() == 0) {
-                        m_sortedFile = tf;
-                        break;
-                    } else {
-                        m_runs.add(tf);
-                    }
-                }
-            }
-
-            m_bInsertionPhase = false;
+            // The data fits in main memory. No need to store to disk.
+            Collections.sort(buffer);
+            insertionPhase = false;
         }
 
         public Record getNextRecord() {
-            if (m_bInsertionPhase == true)
-                throw new IllegalStateException("ExternalSorter::getNextRecord: Input has not been sorted yet.");
+            if (insertionPhase == true)
+                throw new IllegalStateException("ExternalSorter.getNextRecord: Input has not been sorted yet.");
 
             Record ret;
 
-            if (m_sortedFile.get() == null) {
-                if (m_stI < m_buffer.size()) {
-                    ret = m_buffer.get(m_stI);
-                    m_buffer.set(m_stI, null);
-                    ++m_stI;
+            if (sortedRecords.peek() == null) {
+                if (stI < buffer.size()) {
+                    ret = buffer.get(stI);
+                    buffer.set(stI, null);
+                    ++stI;
                 } else {
                     ret = null;
                 }
             } else {
-                ret = new Record();
-                ret.loadFromFile(m_sortedFile);
+                ret = sortedRecords.poll();
             }
 
             return ret;
         }
 
         public int getTotalEntries() {
-            return m_totalEntries;
-        }
-
-
-
-
-    }
-
-    private class PQEntry implements Comparable<PQEntry> {
-        public Record m_r;
-        public int m_index;
-
-        public PQEntry(Record r, int u32Index) /*: m_r(r), m_u32Index(u32Index) */{
-            this.m_r = r;
-            this.m_index = u32Index;
-        }
-
-
-        @Override
-        public int compareTo(PQEntry o) {
-            if(m_r.compareTo(o.m_r) < 0)
-                return -1;
-            else if(m_r.compareTo(o.m_r) > 0)
-                return 1;
-            else
-                return 0;
+            return totalEntries;
         }
     }
 
 
     protected class Record implements Comparable<Record> {
-        public Region m_r;
-        public int m_id; //id_type
-        public int m_len;
-        public NodeData m_pData;
-        public int m_s;
+        public Region region;
+        public int id; //id_type
+        public int length;
+        public NodeData nodeData;
+        public int sortingDimension; //sorting dimension (m_s)
 
 
-        public Record() {}
-
-
-        public Record(Region r, int id, NodeData pData, int s) {
-            this.m_r = r;
-            this.m_id = id;
-            this.m_pData = pData; //pointer to data!
-            this.m_s = s;
-        }
-
-        public void storeToFile(TemporaryStorage f) {
-            Record r = new Record(m_r, m_id, m_pData, m_s);
-            f.m_buffer.add(r);
-        }
-
-        public /*void*/boolean loadFromFile(TemporaryStorage f) {
-            Record rec = f.get();
-
-            if(rec == null)
-                return false;
-            else {
-                m_id = rec.m_id;
-                m_s = rec.m_s;
-                m_r = rec.m_r;
-                m_len = rec.m_len;
-                m_pData = rec.m_pData;
-                return true;
-            }
+        public Record(Region region, int id, NodeData nodeData, int sortingDimension) {
+            this.region = region;
+            this.id = id;
+            this.nodeData = nodeData; //pointer to data!
+            this.sortingDimension = sortingDimension;
         }
 
         @Override
-        public int compareTo(Record r) {
-            if (m_s != r.m_s)
+        public int compareTo(Record record) {
+            if (sortingDimension != record.sortingDimension)
                 throw new IllegalStateException("ExternalSorter::Record::compareTo: Incompatible sorting dimensions.");
 
-            if (m_r.high[m_s] + m_r.low[m_s] < r.m_r.high[m_s] + r.m_r.low[m_s])
+            if (region.high[sortingDimension] + region.low[sortingDimension] < record.region.high[sortingDimension] + record.region.low[sortingDimension])
                 return -1;
-            else if (m_r.high[m_s] + m_r.low[m_s] > r.m_r.high[m_s] + r.m_r.low[m_s])
+            else if (region.high[sortingDimension] + region.low[sortingDimension] > record.region.high[sortingDimension] + record.region.low[sortingDimension])
                 return 1;
             return 0;
         }

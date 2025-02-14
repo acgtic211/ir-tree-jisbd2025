@@ -90,12 +90,13 @@ public class IndexLogic {
         logger.info("Done");
     }
 
-    public void createIRtreeWithBulkLoading(int fanout, double fillFactor, int dimension) {
+    //TODO MISSING BULK LOADING METHOD
+    public void createIRtreeWithBulkLoading(int fanout, double fillFactor, int dimension, RTree.BulkLoadMethod bulkLoadMethod) {//int indexCapacity, int leafCapacity, int pageSize, int numPages) {
         // Build RTree index with location data
         //createRtree(datasetParameters.locationFile, fanout, fillFactor, dimension);
 
         // TODO Testing bulk loading
-        createRtreeWithBulkLoading(fanout, fillFactor, dimension);
+        createRtreeWithBulkLoading(fanout, fillFactor, dimension, bulkLoadMethod);//indexCapacity, leafCapacity, pageSize, numPages);
 
         // Build IRTree index with spatio-textual data
         logger.info("Creating IR-Tree");
@@ -145,9 +146,10 @@ public class IndexLogic {
         logger.info("Done");
     }
 
-    private void createRtreeWithBulkLoading(int fanout, double fillFactor, int dimension) {
+    // TODO FIX FANOUT
+    private void createRtreeWithBulkLoading(int fanout, double fillFactor, int dimension, RTree.BulkLoadMethod bulkLoadMethod) {//int indexCapacity, int leafCapacity, int pageSize, int numPages) {
         logger.info("Creating R-Tree with parameters: \nfanout:{} \nfillfactor:{} \ndimensions:{}", fanout, fillFactor, dimension);
-        spatialIndex = BuildRTree.buildRTreeSTR(datasetParameters, fanout, fillFactor, dimension);
+        spatialIndex = BuildRTree.buildRTreeSTR(datasetParameters, fanout, fillFactor, dimension, bulkLoadMethod);//indexCapacity, leafCapacity, pageSize, numPages);
         logger.info("Done");
     }
 

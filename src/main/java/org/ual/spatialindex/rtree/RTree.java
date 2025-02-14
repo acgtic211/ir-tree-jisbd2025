@@ -429,6 +429,39 @@ public class RTree implements ISpatialIndex {
         pseudoNodes.add(new Data(data, region, id));
     }
 
+    // index and leaf capacity can be the same as the fanout for now
+    public void bulkLoadRTree(BulkLoadMethod bulkLoadMethod, int indexCapacity, int leafCapacity) {
+        int index = (int) Math.floor(indexCapacity * fillFactor);
+        int leaf = (int) Math.floor(leafCapacity * fillFactor);
+
+        if(bulkLoadMethod == BulkLoadMethod.BLM_STR) {
+            BulkLoader bl = new BulkLoader();
+            bl.bulkLoadUsingSTR(this, pseudoNodes, index, leaf);
+        } else {
+            logger.error("createAndBulkLoadNewRTree: Unknown bulk load method.");
+            throw new IllegalArgumentException("createAndBulkLoadNewRTree: Unknown bulk load method.");
+        }
+
+    }
+
+    // TODO DELETE TEST
+    // index and leaf capacity can be the same as the fanout for now
+    public void bulkLoadRTreeNEW(BulkLoadMethod bulkLoadMethod, int indexCapacity, int leafCapacity, int pageSize, int numberOfPages) {
+        int index = (int) Math.floor(indexCapacity * fillFactor);
+        int leaf = (int) Math.floor(leafCapacity * fillFactor);
+
+        if(bulkLoadMethod == BulkLoadMethod.BLM_STR) {
+            BulkLoaderNEW bl = new BulkLoaderNEW();
+            bl.bulkLoadWithSTR(this, pseudoNodes, index, leaf/*, pageSize, numberOfPages*/);
+        } else {
+            logger.error("createAndBulkLoadNewRTree: Unknown bulk load method.");
+            throw new IllegalArgumentException("createAndBulkLoadNewRTree: Unknown bulk load method.");
+        }
+
+    }
+
+
+    // TODO DELETE
     public void /*SpatialIndex::ISpatialIndex* SpatialIndex::RTree*/ createAndBulkLoadNewRTree(
             BulkLoadMethod m,
             /*IDataStream& stream,*/

@@ -7,6 +7,7 @@ import org.ual.algorithm.aggregator.IAggregator;
 import org.ual.spatialindex.parameters.Dataset;
 import org.ual.spatialindex.parameters.ParametersFactory;
 import org.ual.spatialindex.parameters.DatasetParameters;
+import org.ual.spatialindex.rtree.RTree;
 import org.ual.utils.ResultQueryTotal;
 import org.ual.utils.main.IndexLogic;
 import org.ual.utils.main.QueryLogic;
@@ -65,6 +66,9 @@ public class NewMain {
         CDIR
     }
     static SpatialIndexType selectedSpatialIndex;
+
+    // BulkLoader Method
+    static RTree.BulkLoadMethod bulkLoadMethod = RTree.BulkLoadMethod.BLM_STR;
 
     enum QueryTypeGroup {
         AGGREGATE,
@@ -176,7 +180,7 @@ public class NewMain {
         if(selectedSpatialIndex == SpatialIndexType.IR) {
             indexLogic.createIRtree(fanout, fillFactor, dimension);
         } else if(selectedSpatialIndex == SpatialIndexType.IR_Bulk) {
-            indexLogic.createIRtreeWithBulkLoading(fanout, fillFactor, dimension);// TODO expose more parameters
+            indexLogic.createIRtreeWithBulkLoading(fanout, fillFactor, dimension, bulkLoadMethod);//fanout, fanout);//, 10000, 100);// TODO expose more parameters
         } else if(selectedSpatialIndex == SpatialIndexType.DIR) {
             indexLogic.createDIRtree(fanout, fillFactor, dimension, maxWord, betaArea);
         } else if(selectedSpatialIndex == SpatialIndexType.CIR) {
