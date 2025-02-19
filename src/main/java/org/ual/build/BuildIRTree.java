@@ -23,14 +23,16 @@ public class BuildIRTree {
         // In memory inverted file
         InvertedFile invertedFile = new InvertedFile();
 
-        long start = System.currentTimeMillis();
-        long initMem = StatisticsLogic.getMemUsed();
+        long initMem = StatisticsLogic.getClearedMem();
+        long startTime = System.currentTimeMillis();
+
         ArrayList<WeightEntry> invertedIndex = tree.ir(dms, invertedFile);
-        long end = System.currentTimeMillis();
+
+        long endTime = System.currentTimeMillis();
         long endMem = StatisticsLogic.getMemUsed();
         StatisticsLogic.irTreePeakMemUsed = (endMem - initMem);
-        StatisticsLogic.irTreeMemUsed = StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
-        StatisticsLogic.irTreeBuildTime = (end - start);
+        StatisticsLogic.irTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+        StatisticsLogic.irTreeBuildTime = (endTime - startTime);
 
         logger.info("IRtree build in: {} ms", StatisticsLogic.irTreeBuildTime);
         logger.info("IRtree peak memory usage: {} Megabytes", (StatisticsLogic.irTreePeakMemUsed/1024)/1024);

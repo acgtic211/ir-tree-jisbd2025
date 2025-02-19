@@ -31,6 +31,10 @@ public class StatisticsLogic {
         this.metricsDirectoryPath = metricsDirectoryPath;
     }
 
+    /**
+     * Get the memory used by the JVM without garbage collection
+     * @return the memory used by the JVM
+     */
     public static long getMemUsed() {
         long totalMemory = Runtime.getRuntime().totalMemory();
         long freeMemory = Runtime.getRuntime().freeMemory();
@@ -39,17 +43,13 @@ public class StatisticsLogic {
         return usedMemory;
     }
 
-    public static long printMemUsed(String txt, long prev, int n) {
-        long current = getMemUsed();
-        System.out.println(txt + ": " + (current - prev) + "   per item: " +
-                ((n == 0) ? "NaN" : (current - prev) / n));
-        return current - prev;
-    }
-
-    public static long cleanMem(int N, long prevMemUsed) {
-        long ret = prevMemUsed;
+    /**
+     * WARNING!: DO NOT USE inbetween time measures. In introduce a 500ms delay.
+     * Get the memory used by the JVM after garbage collection
+     * @return the memory used by the JVM after garbage collection
+     */
+    public static long getClearedMem() {
         for (int i = 0; i < 5; i++) {
-            ret = Math.min(ret, StatisticsLogic.printMemUsed("MemTree", prevMemUsed, N));
             System.gc();
             try {
                 Thread.sleep(100);
@@ -57,8 +57,9 @@ public class StatisticsLogic {
                 logger.error("Fail to clean memory", e);
             }
         }
-        return ret;
+        return getMemUsed();
     }
+
 
     public void writeResults(/*ResultQueryTotal globalQueryResults, String metricsDirectoryPath */) {
         logger.info("Writing Results...");

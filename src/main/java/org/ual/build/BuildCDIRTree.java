@@ -25,14 +25,16 @@ public class BuildCDIRTree {
     public static void buildTreeCDIR(RTreeEnhanced tree, AbstractDocumentStore dms, HashMap<Integer, Integer> clusterMap, InvertedFile invertedFile, int numClusters) {
         RTreeEnhanced.numOfClusters = numClusters;
 
-        long start = System.currentTimeMillis();
-        long initMem = StatisticsLogic.getMemUsed();
+        long initMem = StatisticsLogic.getClearedMem();
+        long startTime = System.currentTimeMillis();
+
         tree.cirClusterEnhance(clusterMap, dms, invertedFile);
-        long end = System.currentTimeMillis();
+
+        long endTime = System.currentTimeMillis();
         long endMem = StatisticsLogic.getMemUsed();
         StatisticsLogic.irTreePeakMemUsed = (endMem - initMem);
-        StatisticsLogic.irTreeMemUsed = StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
-        StatisticsLogic.irTreeBuildTime = (end - start);
+        StatisticsLogic.irTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+        StatisticsLogic.irTreeBuildTime = (endTime - startTime);
 
         logger.info("CDIRtree build in: {} ms", StatisticsLogic.irTreeBuildTime);
         logger.info("CDIRtree peak memory usage: {} Megabytes", (StatisticsLogic.irTreePeakMemUsed/1024)/1024);

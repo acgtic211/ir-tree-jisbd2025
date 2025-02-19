@@ -34,8 +34,8 @@ public class WeightCompute {
         // Weights per term
         ArrayList<WeightEntry> wordWeights = new ArrayList<>();
 
-        long start = System.currentTimeMillis();
-        long initMem = StatisticsLogic.getMemUsed();
+        long initMem = StatisticsLogic.getClearedMem();
+        long startTime = System.currentTimeMillis();
         try {
             LineNumberReader lr = new LineNumberReader(new FileReader(wordsFile));
             int totalLength = 0;
@@ -98,11 +98,11 @@ public class WeightCompute {
         } catch (Exception e) {
             logger.error("Error while operating with weight file.", e);
         }
-        long end = System.currentTimeMillis();
-        long endMem = StatisticsLogic.getMemUsed();
+        long stopTime = System.currentTimeMillis();
+        long endMem = StatisticsLogic.getMemUsed(); // Memory without cleaning
         StatisticsLogic.weightIndexPeakMemUsed = (endMem - initMem);
-        StatisticsLogic.weightIndexMemUsed = StatisticsLogic.cleanMem(weightList.getSize(), initMem);
-        StatisticsLogic.weightIndexBuildTime = (end - start);
+        StatisticsLogic.weightIndexMemUsed = (StatisticsLogic.getClearedMem() - initMem);
+        StatisticsLogic.weightIndexBuildTime = (stopTime - startTime);
 
         logger.info("Weight processing done in: {} ms", StatisticsLogic.weightIndexBuildTime);
         logger.info("Weights peak memory usage: {} Megabytes", (StatisticsLogic.weightIndexPeakMemUsed/1024)/1024);

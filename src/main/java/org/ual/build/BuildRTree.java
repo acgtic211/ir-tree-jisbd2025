@@ -130,8 +130,8 @@ public class BuildRTree {
             String line;
             String[] temp;
 
-            long start = System.currentTimeMillis();
-            long initMem = StatisticsLogic.getMemUsed();
+            long initMem = StatisticsLogic.getClearedMem();
+            long startTime = System.currentTimeMillis();
 
             while ((line = locationReader.readLine()) != null) {
                 temp = line.split(",");
@@ -153,11 +153,11 @@ public class BuildRTree {
                 count++;
             }
 
-            long end = System.currentTimeMillis();
+            long endTime = System.currentTimeMillis();
             long endMem = StatisticsLogic.getMemUsed();
             StatisticsLogic.rTreePeakMemUsed = endMem - initMem;
-            StatisticsLogic.rTreeMemUsed = StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
-            StatisticsLogic.rTreeBuildTime = (end - start);
+            StatisticsLogic.rTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+            StatisticsLogic.rTreeBuildTime = (endTime - startTime);
 
             logger.info("Operations: {}", count);
             logger.info("Tree: {}", tree);
@@ -216,8 +216,8 @@ public class BuildRTree {
             String line;
             String[] temp;
 
-            long start = System.currentTimeMillis();
-            long initMem = StatisticsLogic.getMemUsed();
+            long initMem = StatisticsLogic.getClearedMem();
+            long startTime = System.currentTimeMillis();
 
             while ((line = locationReader.readLine()) != null) {
                 temp = line.split(",");
@@ -257,11 +257,11 @@ public class BuildRTree {
             //BulkLoader.bulkLoadUsingSTR(tree, tree.pseudoNodes, capacity, dimension);
             System.out.println("Done processing pseudo nodes");
 
-            long end = System.currentTimeMillis();
+            long endTime = System.currentTimeMillis();
             long endMem = StatisticsLogic.getMemUsed();
             StatisticsLogic.rTreePeakMemUsed = endMem - initMem;
-            StatisticsLogic.rTreeMemUsed = StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
-            StatisticsLogic.rTreeBuildTime = (end - start);
+            StatisticsLogic.rTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+            StatisticsLogic.rTreeBuildTime = (endTime - startTime);
 
             logger.info("Operations: {}", count);
             logger.info("Tree: {}", tree);
@@ -319,8 +319,8 @@ public class BuildRTree {
             String line;
             String[] temp;
 
-            long start = System.currentTimeMillis();
-            long initMem = StatisticsLogic.getMemUsed();
+            long initMem = StatisticsLogic.getClearedMem();
+            long startTime = System.currentTimeMillis();
 
             while ((line = locationReader.readLine()) != null) {
                 temp = line.split(",");
@@ -359,11 +359,11 @@ public class BuildRTree {
             //BulkLoader.bulkLoadUsingSTR(tree, tree.pseudoNodes, capacity, dimension);
             System.out.println("Done processing pseudo nodes");
 
-            long end = System.currentTimeMillis();
+            long endTime = System.currentTimeMillis();
             long endMem = StatisticsLogic.getMemUsed();
             StatisticsLogic.rTreePeakMemUsed = endMem - initMem;
-            StatisticsLogic.rTreeMemUsed = StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
-            StatisticsLogic.rTreeBuildTime = (end - start);
+            StatisticsLogic.rTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+            StatisticsLogic.rTreeBuildTime = (endTime - startTime);
 
             logger.info("Operations: {}", count);
             logger.info("Tree: {}", tree);
