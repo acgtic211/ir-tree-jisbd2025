@@ -57,6 +57,7 @@ public class QueryResultWriter {
     public void writeToDisk(String filePath, String fileName) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath + fileName + ".txt", true))) {
             writer.append(stringBuilder);
+            stringBuilder.setLength(0); // Reset the StringBuilder
         } catch (IOException e) {
             logger.error("Fail to write queries", e);
         }
