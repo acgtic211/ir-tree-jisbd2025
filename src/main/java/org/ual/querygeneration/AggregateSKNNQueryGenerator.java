@@ -52,7 +52,7 @@ public class AggregateSKNNQueryGenerator extends QueryGenerator {
                 double queryWeight = queryWeights[i] / queryWeightSum * groupSize;
 
                 queries.add(createKWQuery(i, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
-                        centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan));
+                        centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan, parameters.topkWords));
             }
 
             //IAggregator aggregator = AggregatorFactory.getAggregator(aggregator);
@@ -106,7 +106,7 @@ public class AggregateSKNNQueryGenerator extends QueryGenerator {
                 double queryWeight = queryWeights[i] / queryWeightSum * groupSize;
 
                 queries.add(createKWQuery(i, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan,
-                        centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan));
+                        centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan, parameters.topkWords));
             }
 
             //IAggregator aggregator = AggregatorFactory.getAggregator(aggregatorName);
