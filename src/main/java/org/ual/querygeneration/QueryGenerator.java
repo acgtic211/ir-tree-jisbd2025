@@ -35,7 +35,7 @@ public class QueryGenerator {
      * Generate a query with keywords and weights
      */
     protected Query createKWQuery(int queryId, double queryWeight, int numberOfKeywords, int keywordSpaceMiddle, int keywordSpaceSpan,
-                                         double centroidLatitude, double centroidLongitude, double latitudeSpan, double longitudeSpan) {
+                                         double centroidLatitude, double centroidLongitude, double latitudeSpan, double longitudeSpan, int[] topkWords) {
 
         double x = (centroidLatitude - latitudeSpan / 2) + RANDOM.nextDouble() * latitudeSpan;
         double y = (centroidLongitude - longitudeSpan / 2) + RANDOM.nextDouble() * longitudeSpan;
@@ -46,11 +46,18 @@ public class QueryGenerator {
         double weightTotal = 0.0;
 
         for (int k = 0; k < numberOfKeywords; k++) {
-            int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));
+            // Add top-k words if available
+            if(k < topkWords.length) {
+                keywords.add(topkWords[k]);
+            } else {
+                int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));// Avoid negative values
+                keywords.add(keyword);
+            }
+            //int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));
             double keywordWeight = 0.5 + RANDOM.nextDouble() / 2;
             weightTotal += keywordWeight;
 
-            keywords.add(keyword);
+            //keywords.add(keyword);
             keywordWeights.add(keywordWeight);
         }
 
@@ -68,7 +75,7 @@ public class QueryGenerator {
      * Generate a keyword only query, without weights
      */
     protected Query createTopKQuery(int queryId, int numberOfKeywords, int keywordSpaceMiddle, int keywordSpaceSpan,
-                                           double centroidLatitude, double centroidLongitude, double latitudeSpan, double longitudeSpan) {
+                                           double centroidLatitude, double centroidLongitude, double latitudeSpan, double longitudeSpan, int[] topkWords) {
 
         double x = (centroidLatitude - latitudeSpan / 2) + RANDOM.nextDouble() * latitudeSpan;
         double y = (centroidLongitude - longitudeSpan / 2) + RANDOM.nextDouble() * longitudeSpan;
@@ -76,9 +83,16 @@ public class QueryGenerator {
         List<Integer> keywords = new ArrayList<>();
 
         for (int k = 0; k < numberOfKeywords; k++) {
-            int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan)); // Avoid negative values
+            // Add top-k words if available
+            if(k < topkWords.length) {
+                keywords.add(topkWords[k]);
+            } else {
+                int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));// Avoid negative values
+                keywords.add(keyword);
+            }
+            //int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));
             //System.out.println("Keyword GENERATED: " + keyword);
-            keywords.add(keyword);
+            //keywords.add(keyword);
         }
 
         Query query = new Query(queryId, new Point(new double[]{x, y}), keywords);
@@ -87,7 +101,8 @@ public class QueryGenerator {
     }
 
 
-    protected Query createRangeQuery(int queryId, double queryWeight, int numberOfKeywords, Point point, double radius, int keywordSpaceMiddle, int keywordSpaceSpan) {
+    protected Query createRangeQuery(int queryId, double queryWeight, int numberOfKeywords, Point point, double radius,
+                                     int keywordSpaceMiddle, int keywordSpaceSpan, int[] topkWords) {
 
         // Create a point centered around the given point and within the given radius
         double[] coordinates = new double[point.coords.length];
@@ -101,11 +116,18 @@ public class QueryGenerator {
         double weightTotal = 0.0;
 
         for (int k = 0; k < numberOfKeywords; k++) {
-            int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));
+            // Add top-k words if available
+            if(k < topkWords.length) {
+                keywords.add(topkWords[k]);
+            } else {
+                int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));// Avoid negative values
+                keywords.add(keyword);
+            }
+            //int keyword = keywordSpaceMiddle + RANDOM.nextInt(Math.abs(keywordSpaceSpan));
             double keywordWeight = 0.5 + RANDOM.nextDouble() / 2;
             weightTotal += keywordWeight;
 
-            keywords.add(keyword);
+            //keywords.add(keyword);
             keywordWeights.add(keywordWeight);
         }
 

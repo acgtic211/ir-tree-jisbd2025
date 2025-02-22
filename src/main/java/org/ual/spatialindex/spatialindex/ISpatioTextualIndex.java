@@ -19,19 +19,19 @@ public interface ISpatioTextualIndex {
 //    List<SGNNKQuery.Result> sgnnk(InvertedFile invertedFile, SGNNKQuery sgnnkQuery, int topk);
 //    Map<Integer, List<SGNNKQuery.Result>> sgnnkExtended(InvertedFile invertedFile, SGNNKQuery sgnnkQuery, int topk);
 
-    List<AggregateSKNNQuery.Result> gnnkBaselineNEW(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk);
-    List<AggregateSKNNQuery.Result> sgnnkBaselineNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk);
-    List<AggregateSKNNQuery.Result> gnnkNEW(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk);
-    List<AggregateSKNNQuery.Result> sgnnkNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk);
-    Map<Integer, List<AggregateSKNNQuery.Result>> sgnnkExtendedNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk);
+    List<AggregateSKNNQuery.Result> gnnkBaseline(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk);
+    List<AggregateSKNNQuery.Result> sgnnkBaseline(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk);
+    List<AggregateSKNNQuery.Result> gnnk(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk);
+    List<AggregateSKNNQuery.Result> sgnnk(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk);
+    Map<Integer, List<AggregateSKNNQuery.Result>> sgnnkExtended(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk);
 
 //    List<BRQuery.Result> booleanRangeQuery(InvertedFile invertedFile, BRQuery q, float radius);
 //    List<BooleanKnnQuery.Result> booleanKnnQuery(InvertedFile invertedFile, BooleanKnnQuery query, int topk);
 //    List<TopkKnnQuery.Result> topkKnnQuery(InvertedFile invertedFile, TopkKnnQuery q, int topk);
 
-    List<SKNNQuery.Result> booleanRangeQueryNEW(InvertedFile invertedFile, SKNNQuery query, float radius);
-    List<SKNNQuery.Result> booleanKnnQueryNEW(InvertedFile invertedFile, SKNNQuery query, int topk);
-    List<SKNNQuery.Result> topkKnnQueryNEW(InvertedFile invertedFile, SKNNQuery query, int topk);
+    List<SKNNQuery.Result> booleanRangeQuery(InvertedFile invertedFile, SKNNQuery query, float radius);
+    List<SKNNQuery.Result> booleanKnnQuery(InvertedFile invertedFile, SKNNQuery query, int topk);
+    List<SKNNQuery.Result> topkKnnQuery(InvertedFile invertedFile, SKNNQuery query, int topk);
 
     int getIO();
     int getVisitedNodes();

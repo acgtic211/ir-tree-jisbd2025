@@ -273,9 +273,9 @@ public class QueryLogic {
         //List<GNNKQuery> gnnkQueries = GNNKQueryGenerator.generateGNNKQuery(numberOfQueries , groupSize, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
         //List<SGNNKQuery> sgnnkQueries = SGNNKQueryGenerator.generateSGNNKQuery(numberOfQueries, groupSize, mPercentage, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
 
-        AggregateSKNNQueryGenerator queryGenerator = new AggregateSKNNQueryGenerator(1, parameters);
-        List<AggregateSKNNQuery> gnnkQueries = queryGenerator.generateGNNKQuery(numberOfQueries, groupSize, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
-        List<AggregateSKNNQuery> sgnnkQueries = queryGenerator.generateSGNNKQuery(numberOfQueries, groupSize, mPercentage, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
+        AggregateSKNNQueryGenerator queryGenerator = new AggregateSKNNQueryGenerator(ramdomSeed, parameters);
+        //List<AggregateSKNNQuery> gnnkQueries = queryGenerator.generateGNNKQuery(numberOfQueries, groupSize, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
+        //List<AggregateSKNNQuery> sgnnkQueries = queryGenerator.generateSGNNKQuery(numberOfQueries, groupSize, mPercentage, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
 
         long startTime = System.currentTimeMillis();
         double totalCost = 0; // It doesn't keep track of MSGNNK cost - too much extra work
@@ -286,6 +286,7 @@ public class QueryLogic {
         if (aggregateQueryType == AggregateQueryType.GNNK || aggregateQueryType == AggregateQueryType.GNNK_BL) {
             // 1. Generate queries
             //List<GNNKQuery> gnnkQueries = GNNKQueryGenerator.generateGNNKQuery(numberOfQueries , groupSize, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
+            List<AggregateSKNNQuery> gnnkQueries = queryGenerator.generateGNNKQuery(numberOfQueries, groupSize, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
 
             // 2. Calculate Aggreagate Query
             //QueryResultWriter resultWriter = new QueryResultWriter();
@@ -295,9 +296,9 @@ public class QueryLogic {
             for (AggregateSKNNQuery q : gnnkQueries) {
                 List<AggregateSKNNQuery.Result> results;
                 if(aggregateQueryType == AggregateQueryType.GNNK) {
-                    results = tree.gnnkNEW(IndexLogic.invertedFile, q, topk);
+                    results = tree.gnnk(IndexLogic.invertedFile, q, topk);
                 } else {
-                    results = tree.gnnkBaselineNEW(IndexLogic.invertedFile, q, topk);
+                    results = tree.gnnkBaseline(IndexLogic.invertedFile, q, topk);
                 }
 
                 if(writeQueriesToDisk) {
@@ -315,6 +316,7 @@ public class QueryLogic {
         } else {
             // 1. Generate queries
             //List<SGNNKQuery> sgnnkQueries = SGNNKQueryGenerator.generateSGNNKQuery(numberOfQueries, groupSize, mPercentage, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
+            List<AggregateSKNNQuery> sgnnkQueries = queryGenerator.generateSGNNKQuery(numberOfQueries, groupSize, mPercentage, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
 
             // 2. Calculate Aggreagate Query
             //QueryResultWriter resultWriter = new QueryResultWriter();
@@ -324,7 +326,7 @@ public class QueryLogic {
             for (AggregateSKNNQuery q : sgnnkQueries) {
                 if (aggregateQueryType == AggregateQueryType.SGNNK) {
                     List<AggregateSKNNQuery.Result> results;
-                    results = tree.sgnnkNEW(IndexLogic.invertedFile, q, topk);
+                    results = tree.sgnnk(IndexLogic.invertedFile, q, topk);
 
                     totalCost += results.get(0).aggregateCost.totalCost;
                     spatialCost += results.get(0).aggregateCost.spatialCost;
@@ -335,7 +337,7 @@ public class QueryLogic {
 
                 } else if (aggregateQueryType == AggregateQueryType.SGNNK_BL) {
                     List<AggregateSKNNQuery.Result> results;
-                    results = tree.sgnnkBaselineNEW(IndexLogic.invertedFile, q, topk);
+                    results = tree.sgnnkBaseline(IndexLogic.invertedFile, q, topk);
 
                     totalCost += results.get(0).aggregateCost.totalCost;
                     spatialCost += results.get(0).aggregateCost.spatialCost;
@@ -344,7 +346,7 @@ public class QueryLogic {
                     if(writeQueriesToDisk)
                         resultWriter.writeAggregateSKNNResult(results);
                 } else if (aggregateQueryType == AggregateQueryType.SGNNK_EX) {
-                    Map<Integer, List<AggregateSKNNQuery.Result>> results = tree.sgnnkExtendedNEW(IndexLogic.invertedFile, q, topk);
+                    Map<Integer, List<AggregateSKNNQuery.Result>> results = tree.sgnnkExtended(IndexLogic.invertedFile, q, topk);
                     List<Integer> subroupSizes = new ArrayList<>(results.keySet());
                     Collections.sort(subroupSizes);
 
@@ -362,7 +364,7 @@ public class QueryLogic {
                         if(writeQueriesToDisk)
                             resultWriter.write("Size " + q.subGroupSize, true);
                         //writer.write("Size " + q.subGroupSize);
-                        List<AggregateSKNNQuery.Result> results = tree.sgnnkNEW(IndexLogic.invertedFile, q, topk);
+                        List<AggregateSKNNQuery.Result> results = tree.sgnnk(IndexLogic.invertedFile, q, topk);
                         if(writeQueriesToDisk)
                             resultWriter.writeAggregateSKNNResult(results);
                         //writer.writeSGNNKResult(results);
@@ -527,7 +529,7 @@ public class QueryLogic {
 
             for (SKNNQuery q : brskQueries) {
                 List<SKNNQuery.Result> results;
-                results = tree.booleanRangeQueryNEW(IndexLogic.invertedFile, q, radius);
+                results = tree.booleanRangeQuery(IndexLogic.invertedFile, q, radius);
 
                 if(writeQueriesToDisk)
                     resultWriter.writeSKNNResult(results);
@@ -634,7 +636,7 @@ public class QueryLogic {
 
         long startTime = System.currentTimeMillis();
         for(KnnQueryType knnQry : knnQueryTypes) {
-            logger.info("Processing aggregate query: {}", knnQry.toString());
+            logger.info("Processing kNN query: {}", knnQry.toString());
             QueryStats queryStats = new QueryStats(knnQry.toString());
             for(QueryType qryType : queryTypes) {
                 logger.info("Processing based on {}", qryType.toString());
@@ -673,7 +675,7 @@ public class QueryLogic {
             statisticsLogic.queriesStats.put(knnQry.toString(), queryStats);
         }
         long totalTime = System.currentTimeMillis() - startTime;
-        logger.info("Group Size done in {} ms", totalTime);
+        logger.info("kNN queries evaluation done in {} ms", totalTime);
     }
 
 //    public void processKnnQuery(KnnQueryType[] knnQueryTypes) {
@@ -725,14 +727,15 @@ public class QueryLogic {
         //List<SGNNKQuery> sgnnkQueries = SGNNKQueryGenerator.generateSGNNKQuery(numberOfQueries, groupSize, mPercentage, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage, aggregator);
 
         SKNNQueryGenerator queryGenerator = new SKNNQueryGenerator(ramdomSeed, parameters);
-        List<SKNNQuery> bkskQueries = queryGenerator.generateBooleanKNNQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
-        List<SKNNQuery> tkskQueries = queryGenerator.generateTopKNNQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
+        //List<SKNNQuery> bkskQueries = queryGenerator.generateBooleanKNNQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
+        //List<SKNNQuery> tkskQueries = queryGenerator.generateTopKNNQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
 
         long startTime = System.currentTimeMillis();
 
         // Check if the query type is BRSK
         if (knnQueryType == KnnQueryType.BkSK) {
             // 1. Generate queries
+            List<SKNNQuery> bkskQueries = queryGenerator.generateBooleanKNNQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
             //List<BooleanKnnQuery> bkskQueries = BKQueryGenerator.generateBKQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
 
             // 2. Calculate Aggreagate Query
@@ -742,13 +745,14 @@ public class QueryLogic {
 
             for (SKNNQuery q : bkskQueries) {
                 List<SKNNQuery.Result> results;
-                results = tree.booleanKnnQueryNEW(IndexLogic.invertedFile, q, topk);
+                results = tree.booleanKnnQuery(IndexLogic.invertedFile, q, topk);
 
                 if(writeQueriesToDisk)
                     resultWriter.writeSKNNResult(results);
             }
         } else if(knnQueryType == KnnQueryType.TkSK) {
             // 1. Generate queries
+            List<SKNNQuery> tkskQueries = queryGenerator.generateTopKNNQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
             //List<TopkKnnQuery> tkskQueries = TopKQueryGenerator.generateTKQueries(numberOfQueries, numberOfKeywords, querySpaceAreaPercentage, keywordSpacePercentage);
 
             // 2. Calculate Aggreagate Query
@@ -758,7 +762,7 @@ public class QueryLogic {
 
             for (SKNNQuery q : tkskQueries) {
                 List<SKNNQuery.Result> results;
-                results = tree.topkKnnQueryNEW(IndexLogic.invertedFile, q, topk);
+                results = tree.topkKnnQuery(IndexLogic.invertedFile, q, topk);
 
                 if(writeQueriesToDisk)
                     resultWriter.writeSKNNResult(results);
@@ -776,7 +780,7 @@ public class QueryLogic {
             resultWriter.write("[" + knnQueryType + "]" + " Average nodes visited: " + averageNodesVisited, true);
             resultWriter.write("[" + knnQueryType + "]" + " Total time millisecond: " + totalTime, true);
             resultWriter.writeLineSeparator();
-            resultWriter.writeToDisk(resultsDirectoryPath, "[" + knnQueryType.toString() + "]" + queryType.toString());
+            resultWriter.writeToDisk(resultsDirectoryPath, "[" + knnQueryType + "]" + queryType.toString());
         }
 
         logger.debug("Average time millisecond: {}", averageTime);

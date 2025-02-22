@@ -3,6 +3,7 @@ package org.ual.querygeneration;
 import org.ual.query.Query;
 import org.ual.querytype.SKNNQuery;
 import org.ual.spatialindex.parameters.DatasetParameters;
+import org.ual.spatialindex.spatialindex.Point;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +29,17 @@ public class SKNNQueryGenerator extends QueryGenerator {
             int keywordSpaceMiddle = RANDOM.nextInt(parameters.uniqueKeywords - keywordSpaceSpan + 1);
 
             // TODO: Change creation method
-            Query query = createTopKQuery(queryId, numKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude, centroidLongtitude, latitudeSpan, longtitudeSpan);
+            Query query = createTopKQuery(queryId, numKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude,
+                    centroidLongtitude, latitudeSpan, longtitudeSpan, parameters.topkWords);
+            // TESTING
+//            if(queryId < 5) {
+//                query.keywords.clear();
+//                query.keywords.add(1);
+//                //query.location = new Point(new double[]{106, -6});
+//            }
 //            query.keywords.clear();
 //            query.keywords.add(1);
+            //System.out.println("Query: " + query.toString());
 
             SKNNQuery bkQuery = new SKNNQuery(queryId);
             bkQuery.setKNNKQuery(query);
@@ -58,7 +67,12 @@ public class SKNNQueryGenerator extends QueryGenerator {
             //double queryWeight = 1.0;
             // TODO: Check creation method
             //Query query = createKWQuery(queryId, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan);
-            Query query = createTopKQuery(queryId, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan);
+            Query query = createTopKQuery(queryId, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude,
+                    centroidLongitude, latitudeSpan, longitudeSpan, parameters.topkWords);
+
+            // Test
+//            query.keywords.clear();
+//            query.keywords.add(1);
 
             SKNNQuery tkQuery = new SKNNQuery(queryId);
             tkQuery.setKNNKQuery(query);
@@ -86,7 +100,8 @@ public class SKNNQueryGenerator extends QueryGenerator {
             //double queryWeight = 1.0;
             // TODO: Check creation method
             //Query query = createKWQuery(queryId, queryWeight, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan);
-            Query query = createTopKQuery(queryId, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude, centroidLongitude, latitudeSpan, longitudeSpan);
+            Query query = createTopKQuery(queryId, numberOfKeywords, keywordSpaceMiddle, keywordSpaceSpan, centroidLatitude,
+                    centroidLongitude, latitudeSpan, longitudeSpan, parameters.topkWords);
 
             SKNNQuery brQuery = new SKNNQuery(queryId);
             brQuery.setKNNKQuery(query);
