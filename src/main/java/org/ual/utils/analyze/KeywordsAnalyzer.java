@@ -15,11 +15,11 @@ public class KeywordsAnalyzer {
     private static final Logger logger = LogManager.getLogger(KeywordsAnalyzer.class);
 
     public static void main(String[] args) {
-        DatasetParameters datasetParameters = ParametersFactory.getParameters(Dataset.POSTAL_CODES_SET);
+        DatasetParameters datasetParameters = ParametersFactory.getParameters(Dataset.TESTING_SET);
         analyze(datasetParameters.keywordFile);
     }
 
-
+    //TODO: Clean up this method
     public static void analyze(String wordsFile) {
         // Contains <term, frequency> pairs for each term in the input file
         ArrayList<String[]> lines = new ArrayList<>();
@@ -29,6 +29,7 @@ public class KeywordsAnalyzer {
         try {
             LineNumberReader lr = new LineNumberReader(new FileReader(wordsFile));
             int totalLength = 0;
+            int totalLines = 0;
             double maxWeight = 0;
 
             String line = lr.readLine();    // 0,1,2,3,4,5
@@ -49,13 +50,19 @@ public class KeywordsAnalyzer {
             lr.close();
 
             // For now print everything in the logger
-            logger.info("Total lenght: {}", totalLength);
+            logger.info("Total lines read: {}", lines.size());
+            logger.info("Total number of keywords: {}", totalLength);
 //            int cnt = 0;
 //            for(Integer freq : wordsFreq.values()) {
 //                cnt+=freq;
 //            }
 //            logger.info("Total freq: {}", cnt);
             logger.info("Unique words:  {}", wordsFreq.size());
+
+            // Sort the words by frequency and print the top 10
+            ArrayList<String> topWords = new ArrayList<>();
+            wordsFreq.entrySet().stream().sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue())).limit(10).forEach(e -> topWords.add(e.getKey()));
+            logger.info("Top 10 words: {}", topWords);
             //logger.info("Unique keywords: {} - List: {}", wordsFreq.size(), wordsFreq.toString());
 
         }  catch (Exception e) {
