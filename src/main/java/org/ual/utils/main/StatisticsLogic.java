@@ -16,13 +16,20 @@ public class StatisticsLogic {
     public static long weightIndexPeakMemUsed;
     public static long rTreeMemUsed;
     public static long rTreePeakMemUsed;
+    public static long rTreeJVMPeakMemUsed;
     public static long irTreeMemUsed;
     public static long irTreePeakMemUsed;
+    public static long irTreeJVMPeakMemUsed;
     public static long weightIndexBuildTime;
     public static long rTreeBuildTime;
     public static long irTreeBuildTime;
     public ResultQueryTotal globalQueryResults;
     public HashMap<String, QueryStats> queriesStats = new HashMap<>();
+
+    // Testing memory usage using threads
+    public static long maxMemoryUsage = 0;
+    private static boolean monitoring = false;
+    private static Thread memoryMonitorThread;
 
     private static final Logger logger = LogManager.getLogger(StatisticsLogic.class);
 
@@ -60,102 +67,68 @@ public class StatisticsLogic {
         return getMemUsed();
     }
 
+    /**
+     * Start monitoring the memory usage
+     * WARNING!: This method should be called before the memory usage is expected to increase
+     */
+    public static void startMemoryMonitoring() {
+        monitoring = true;
+        maxMemoryUsage = 0; // Reset the max memory usage
+        memoryMonitorThread = new Thread(() -> {
+            while (monitoring) {
+                long currentMemoryUsage = getMemUsed();
+                if (currentMemoryUsage > maxMemoryUsage) {
+                    maxMemoryUsage = currentMemoryUsage;
+                }
+                try {
+                    Thread.sleep(100); // Adjust the interval as needed
+                } catch (InterruptedException e) {
+                    logger.error("Memory monitoring thread interrupted", e);
+                }
+            }
+        });
+        memoryMonitorThread.start();
+    }
 
-    public void writeResults(/*ResultQueryTotal globalQueryResults, String metricsDirectoryPath */) {
+    /**
+     * Stop monitoring the memory usage
+     */
+    public static void stopMemoryMonitoring() {
+        monitoring = false;
+        if (memoryMonitorThread != null) {
+            try {
+                memoryMonitorThread.join();
+            } catch (InterruptedException e) {
+                logger.error("Failed to stop memory monitoring thread", e);
+            }
+        }
+    }
+
+    /**
+     * Get the maximum memory usage
+     * WARNING!: This method should NOT be called while the memory monitor is running to prevent a race condition
+     * @return the maximum memory usage by the JVM
+     */
+    public static long getMaxMemoryUsage() {
+        return maxMemoryUsage;
+    }
+
+
+    /**
+     * Write the stats of the queries results in the metrics directory, int txt and csv format
+     */
+    public void writeResults() {
         logger.info("Writing Results...");
-
-//        StatisticsResultWriter.writeCSV(globalQueryResults.groupSizes, "group-size", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.writeCSV(globalQueryResults.percentages, "subgroup-size", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.writeCSV(globalQueryResults.numKeywords, "number-of-keyword", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.writeCSV(globalQueryResults.querySpaceAreas, "query-space-area", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.writeCSV(globalQueryResults.keyboardSpaceSizes, "keyword-space-size", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.writeCSV(globalQueryResults.topks, "topk", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.writeCSV(globalQueryResults.radii, "range", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.writeCSV(globalQueryResults.alphas, "alpha", globalQueryResults.queryType, metricsDirectoryPath);
-//
-//        StatisticsResultWriter.resultWriter(globalQueryResults.groupSizes, "group-size", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.resultWriter(globalQueryResults.percentages,"subgroup-size", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.resultWriter(globalQueryResults.numKeywords, "number-of-keyword", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.resultWriter(globalQueryResults.querySpaceAreas, "query-space-area", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.resultWriter(globalQueryResults.keyboardSpaceSizes, "keyword-space-size", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.resultWriter(globalQueryResults.topks, "topk", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.resultWriter(globalQueryResults.radii, "range", globalQueryResults.queryType, metricsDirectoryPath);
-//        StatisticsResultWriter.resultWriter(globalQueryResults.alphas, "alpha", globalQueryResults.queryType, metricsDirectoryPath);
-
-        //StatisticsResultWriter.resultWriter(queriesStats, metricsDirectoryPath, true);
 
         StatisticsLogic.resultWriter(queriesStats, metricsDirectoryPath, true);
         StatisticsLogic.resultWriter(queriesStats, metricsDirectoryPath, false);
-
         queriesStats.clear(); // Fix a "buffer leak" when changing the query type
 
         logger.info("Done");
     }
 
 
-    // Write human-readable file
-//    public static void resultWriter(HashMap<String, QueryStats> queriesStats, String metricsDirectoryPath, boolean writeCSV) {
-//        for (Map.Entry<String, QueryStats> qryType : queriesStats.entrySet()) {
-//            if (!qryType.getValue().groupSizes.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "GroupSize"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().groupSizes);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().groupSizes);
-//            }
-//            if (!qryType.getValue().alphas.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "Alpha"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().alphas);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().alphas);
-//            }
-//            if (!qryType.getValue().numKeywords.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "NumberKeywords"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().numKeywords);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().numKeywords);
-//            }
-//            if (!qryType.getValue().percentages.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "Percentages"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().percentages);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().percentages);
-//            }
-//            if (!qryType.getValue().keyboardSpaceSizes.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "KeywordSpaceSize"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().keyboardSpaceSizes);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().keyboardSpaceSizes);
-//            }
-//            if (!qryType.getValue().querySpaceAreas.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "SpaceArea"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().querySpaceAreas);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().querySpaceAreas);
-//            }
-//            if (!qryType.getValue().radii.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "Radius"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().radii);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().radii);
-//            }
-//            if (!qryType.getValue().topks.isEmpty()) {
-//                String fileName = "[" + qryType.getKey() + "]" + "TopK"; // [Aggregate] alpha
-//                if (writeCSV)
-//                    writeCSV(metricsDirectoryPath, fileName, qryType.getValue().topks);
-//                else
-//                    writeTXT(metricsDirectoryPath, fileName, qryType.getValue().topks);
-//            }
-//        }
-//    }
-
-    public static void resultWriter(HashMap<String, QueryStats> queriesStats, String metricsDirectoryPath, boolean writeCSV) {
+    private static void resultWriter(HashMap<String, QueryStats> queriesStats, String metricsDirectoryPath, boolean writeCSV) {
         for (Map.Entry<String, QueryStats> qryType : queriesStats.entrySet()) {
             writeData(metricsDirectoryPath, qryType.getKey(), "GroupSize", qryType.getValue().groupSizes, writeCSV);
             writeData(metricsDirectoryPath, qryType.getKey(), "Alpha", qryType.getValue().alphas, writeCSV);

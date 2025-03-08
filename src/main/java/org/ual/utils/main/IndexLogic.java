@@ -19,7 +19,7 @@ import java.util.HashMap;
 public class IndexLogic {
     static AbstractDocumentStore weightIndex;
     public static ISpatialIndex spatialIndex;
-    static InvertedFile invertedFile; // TODO CHANGE TO PRIVATE
+    static InvertedFile invertedFile;
     static HashMap<Integer, Integer> clusterTree;
     DatasetParameters datasetParameters;
 
@@ -33,13 +33,9 @@ public class IndexLogic {
         this.statisticsLogic = statisticsLogic;
     }
 
-//    @Deprecated
-//    public void createHashMapDS(String keywordsFilePath) {
-//        weightIndex = new HashMapDocumentStore();
-//        logger.info("Computing Term Weights in Memory using HashMap");
-//        WeightCompute.ComputeTermWeights(keywordsFilePath, weightIndex);
-//        logger.info("{} Keywords computed.", weightIndex.getSize());
-//    }
+    /********************************************************************************************************************
+     *                                              Document Store Builders
+     ********************************************************************************************************************/
 
     public void createHashMapDS() {
         weightIndex = new HashMapDocumentStore();
@@ -48,14 +44,6 @@ public class IndexLogic {
         logger.info("{} Keywords computed.", weightIndex.getSize());
     }
 
-//    @Deprecated
-//    public void createTreeMapDS(String keywordsFilePath) {
-//        weightIndex = new TreeMapDocumentStore();
-//        logger.info("Computing Term Weights in Memory using TreeMap");
-//        WeightCompute.ComputeTermWeights(keywordsFilePath, weightIndex);
-//        logger.info("{} Keywords computed.", weightIndex.getSize());
-//    }
-
     public void createTreeMapDS() {
         weightIndex = new TreeMapDocumentStore();
         logger.info("Computing Term Weights in Memory using TreeMap");
@@ -63,43 +51,57 @@ public class IndexLogic {
         logger.info("{} Keywords computed.", weightIndex.getSize());
     }
 
-//    @Deprecated
-//    public void createIRtree(String locationsFilePath, int fanout, double fillFactor, int dimension) {
-//        // Build RTree index with location data
-//        createRtree(locationsFilePath, fanout, fillFactor, dimension);
-//
-//        // TODO Testing bulk loading
-//        //createRtreeWithBulkLoading(locationsFilePath, fanout, fillFactor, dimension);
-//
-//        // Build IRTree index with spatio-textual data
-//        logger.info("Creating IR-Tree");
-//        invertedFile = BuildIRTree.buildTreeIR((RTree) spatialIndex, weightIndex);
-//        logger.info("Done");
-//    }
+    private void createClusterTree(int numClusters, int numMoves){
+        logger.info("Creating cluster tree with Kmean medoids...");
+        clusterTree = KMean.calculateKMean(weightIndex, numClusters, numMoves);
+        logger.info("Done");
+    }
+
+    /********************************************************************************************************************
+     *                                              R-tree Builders
+     ********************************************************************************************************************/
+
+    private void createRtree(int fanout, double fillFactor, int dimension) {
+        logger.info("Creating R-Tree with parameters: \nfanout:{} \nfillfactor:{} \ndimensions:{}", fanout, fillFactor, dimension);
+        spatialIndex = BuildRTree.buildRTree(datasetParameters, fanout, fillFactor, dimension);
+        logger.info("Done");
+    }
+
+    private void createRtreeWithBulkLoading(int fanout, double fillFactor, int dimension, RTree.BulkLoadMethod bulkLoadMethod) {//int indexCapacity, int leafCapacity, int pageSize, int numPages) {
+        logger.info("Creating R-Tree using BulkLoading STR with parameters: \nfanout:{} \nfillfactor:{} \ndimensions:{}", fanout, fillFactor, dimension);
+        spatialIndex = BuildRTree.buildRTreeSTR(datasetParameters, fanout, fillFactor, dimension, bulkLoadMethod);//indexCapacity, leafCapacity, pageSize, numPages);
+        logger.info("Done");
+    }
+
+    private void createEnhancedRtree(int fanout, double fillFactor, int dimension, int maxWord, double betaArea) {
+        logger.info("Creating Enhanced R-Tree with parameters: \nfanout:{} \nfillfactor:{} \ndimensions:{} \nmaxWord:{} \nbetaArea:{}", fanout, fillFactor, dimension, maxWord, betaArea);
+        spatialIndex = BuildRTreeEnhanced.buildEnhancedRTree(datasetParameters, fanout, fillFactor, dimension, maxWord, weightIndex, betaArea);
+        logger.info("Done");
+    }
+
+
+
+    /********************************************************************************************************************
+     *                                              IRTree Builders
+     ********************************************************************************************************************/
 
     public void createIRtree(int fanout, double fillFactor, int dimension) {
-        // Build RTree index with location data
+        // 1. Build the RTree index with the spatial data
         createRtree(fanout, fillFactor, dimension);
 
-        // TODO Testing bulk loading
-        //createRtreeWithBulkLoading(locationsFilePath, fanout, fillFactor, dimension);
-
-        // Build IRTree index with spatio-textual data
+        // 2. Build the IRTree index with spatio-textual data
         logger.info("Creating IR-Tree");
         invertedFile = BuildIRTree.buildTreeIR((RTree) spatialIndex, weightIndex);
         logger.info("Done");
     }
 
-    //TODO MISSING BULK LOADING METHOD
-    public void createIRtreeWithBulkLoading(int fanout, double fillFactor, int dimension, RTree.BulkLoadMethod bulkLoadMethod) {//int indexCapacity, int leafCapacity, int pageSize, int numPages) {
-        // Build RTree index with location data
-        //createRtree(datasetParameters.locationFile, fanout, fillFactor, dimension);
 
-        // TODO Testing bulk loading
+    public void createIRtreeWithBulkLoading(int fanout, double fillFactor, int dimension, RTree.BulkLoadMethod bulkLoadMethod) {//int indexCapacity, int leafCapacity, int pageSize, int numPages) {
+        // 1. Build the RTree index with spatial data using Bulk Loading
         createRtreeWithBulkLoading(fanout, fillFactor, dimension, bulkLoadMethod);//indexCapacity, leafCapacity, pageSize, numPages);
 
-        // Build IRTree index with spatio-textual data
-        logger.info("Creating IR-Tree");
+        // 2. Build the IRTree index with spatio-textual data
+        logger.info("Creating IR-Tree based on Bulk Loading R-Tree");
         invertedFile = BuildIRTree.buildTreeIR((RTree) spatialIndex, weightIndex);
         logger.info("Done");
     }
@@ -140,30 +142,7 @@ public class IndexLogic {
         logger.info("Done");
     }
 
-    private void createRtree(int fanout, double fillFactor, int dimension) {
-        logger.info("Creating R-Tree with parameters: \nfanout:{} \nfillfactor:{} \ndimensions:{}", fanout, fillFactor, dimension);
-        spatialIndex = BuildRTree.buildRTree(datasetParameters, fanout, fillFactor, dimension);
-        logger.info("Done");
-    }
 
-    // TODO FIX FANOUT
-    private void createRtreeWithBulkLoading(int fanout, double fillFactor, int dimension, RTree.BulkLoadMethod bulkLoadMethod) {//int indexCapacity, int leafCapacity, int pageSize, int numPages) {
-        logger.info("Creating R-Tree with parameters: \nfanout:{} \nfillfactor:{} \ndimensions:{}", fanout, fillFactor, dimension);
-        spatialIndex = BuildRTree.buildRTreeSTR(datasetParameters, fanout, fillFactor, dimension, bulkLoadMethod);//indexCapacity, leafCapacity, pageSize, numPages);
-        logger.info("Done");
-    }
-
-    private void createEnhancedRtree(int fanout, double fillFactor, int dimension, int maxWord, double betaArea) {
-        logger.info("Creating Enhanced R-Tree with parameters: \nfanout:{} \nfillfactor:{} \ndimensions:{} \nmaxWord:{} \nbetaArea:{}", fanout, fillFactor, dimension, maxWord, betaArea);
-        spatialIndex = BuildRTreeEnhanced.buildEnhancedRTree(datasetParameters, fanout, fillFactor, dimension, maxWord, weightIndex, betaArea);
-        logger.info("Done");
-    }
-
-    private void createClusterTree(int numClusters, int numMoves){
-        logger.info("Creating cluster tree with Kmean medoids...");
-        clusterTree = KMean.calculateKMean(weightIndex, numClusters, numMoves);
-        logger.info("Done");
-    }
 
 
 }
