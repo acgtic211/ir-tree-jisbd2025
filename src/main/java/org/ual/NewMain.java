@@ -81,13 +81,12 @@ public class NewMain {
 
     // Specify aggregate query types to use
     static QueryLogic.AggregateQueryType[] aggregateQueryTypes = {
-            QueryLogic.AggregateQueryType.GNNK,
-            QueryLogic.AggregateQueryType.SGNNK };
+            QueryLogic.AggregateQueryType.GNNK };
 
     // Specify knn query types to use
     static QueryLogic.KnnQueryType[] knnQueryTypes = {
             QueryLogic.KnnQueryType.BkSK,
-            QueryLogic.KnnQueryType.TkSK};
+            QueryLogic.KnnQueryType.TkSK };
 
     // Specify range query types to use
     static QueryLogic.RangeQueryType[] rangeQueryTypes = {
@@ -110,7 +109,7 @@ public class NewMain {
     static QueryParameters selectedQueryParameter;
 
     // Number of keywords
-    static int numberOfQueries = 20;
+    static int numberOfQueries = 20;//
 
     static int[] groupSizes = {10, 20, 40, 60, 80}; // Group Size
     static int groupSizeDefault = 10;
@@ -125,6 +124,8 @@ public class NewMain {
     static int[] topks = {1, 10, 20, 30, 40, 50};
     //static int[] topks = {1, 10, 100, 200, 400, 600, 800, 1000};
     static int topkDefault = 10;
+    //static int[] topks = {10, 50, 90, 130, 170, 200};
+    //static int topkDefault = 90;
     static double[] alphas = {0.1, 0.3, 0.5, 0.7, 0.9};
     static double alphaDefault = 0.5;
     static float[] radius = {1f, 2f, 5f, 10f, 20f};
@@ -324,8 +325,9 @@ public class NewMain {
         System.out.println("-------------------------\n");
         System.out.println("\t1 - Postal codes");
         System.out.println("\t2 - Sports");
-        System.out.println("\t3 - Hotel");
-        System.out.println("\t4 - Test");
+        System.out.println("\t3 - Parks");
+        System.out.println("\t4 - Hotel");
+        System.out.println("\t5 - Test");
         System.out.println("\t");
         System.out.println("\t0 - Quit");
         System.out.println("-------------------------\n");
@@ -346,10 +348,14 @@ public class NewMain {
                 parameters = ParametersFactory.getParameters(Dataset.SPORTS_SET);
                 break;
             case 3:
+                dataset = Dataset.PARKS_SET;
+                parameters = ParametersFactory.getParameters(Dataset.PARKS_SET);
+                break;
+            case 4:
                 dataset = Dataset.HOTEL_SET;
                 parameters = ParametersFactory.getParameters(Dataset.HOTEL_SET);
                 break;
-            case 4:
+            case 5:
                 dataset = Dataset.TESTING_SET;
                 parameters = ParametersFactory.getParameters(Dataset.TESTING_SET);
                 break;
