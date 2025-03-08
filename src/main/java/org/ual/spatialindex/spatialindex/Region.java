@@ -224,21 +224,16 @@ public class Region implements IShape
         return false;
     }
 
-    public double getMinimumDistance(final Point p)
-    {
+    public double getMinimumDistance(final Point p) {
         if (low.length != p.coords.length) throw new IllegalArgumentException("getMinimumDistance: Shape has the wrong number of dimensions.");
 
         double ret = 0.0;
 
-        for (int cIndex = 0; cIndex < low.length; cIndex++)
-        {
-            if (p.coords[cIndex] < low[cIndex])
-            {
-                ret += Math.pow(low[cIndex] - p.coords[cIndex], 2.0);
-            }
-            else if (p.coords[cIndex] > high[cIndex])
-            {
-                ret += Math.pow(p.coords[cIndex] - high[cIndex], 2.0);
+        for (int index = 0; index < low.length; index++) {
+            if (p.coords[index] < low[index]) {
+                ret += Math.pow(low[index] - p.coords[index], 2);
+            } else if (p.coords[index] > high[index]) {
+                ret += Math.pow(p.coords[index] - high[index], 2);
             }
         }
 

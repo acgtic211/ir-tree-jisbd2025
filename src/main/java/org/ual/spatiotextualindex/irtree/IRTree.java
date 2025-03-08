@@ -32,7 +32,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
      * where objects are sorted according to the decreasing value of their costs.
      */
     @Override
-    public List<AggregateSKNNQuery.Result> gnnkBaselineNEW(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk) {
+    public List<AggregateSKNNQuery.Result> gnnkBaseline(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk) {
         LinkedList<NNEntryExtended> list = new LinkedList<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         list.add(root);
@@ -91,7 +91,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
      * where objects are sorted according to the decreasing value of their costs.
      */
     @Override
-    public List<AggregateSKNNQuery.Result> sgnnkBaselineNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
+    public List<AggregateSKNNQuery.Result> sgnnkBaseline(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
         LinkedList<NNEntryExtended> list = new LinkedList<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         list.add(root);
@@ -178,7 +178,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
      * where objects are sorted according to the decreasing value of their costs.
      */
     @Override
-    public List<AggregateSKNNQuery.Result> gnnkNEW(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk) {
+    public List<AggregateSKNNQuery.Result> gnnk(InvertedFile invertedFile, AggregateSKNNQuery gnnkQuery, int topk) {
         PriorityQueue<NNEntryExtended> queue = new PriorityQueue<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         queue.add(root);
@@ -224,7 +224,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
      * where objects are sorted according to the decreasing value of their costs.
      */
     @Override
-    public List<AggregateSKNNQuery.Result> sgnnkNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
+    public List<AggregateSKNNQuery.Result> sgnnk(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
         PriorityQueue<NNEntryExtended> queue = new PriorityQueue<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0));
         queue.add(root);
@@ -304,7 +304,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
      * where objects are sorted according to the decreasing value of their costs.
      */
     @Override
-    public Map<Integer, List<AggregateSKNNQuery.Result>> sgnnkExtendedNEW(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
+    public Map<Integer, List<AggregateSKNNQuery.Result>> sgnnkExtended(InvertedFile invertedFile, AggregateSKNNQuery sgnnkQuery, int topk) {
         PriorityQueue<NNEntryExtended> queue = new PriorityQueue<>();
         NNEntryExtended root = new NNEntryExtended(new RtreeEntry(rootID, false), new Cost(0, 0, 0), null);
         queue.add(root);
@@ -417,7 +417,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
 
 
     @Override
-    public List<SKNNQuery.Result> booleanRangeQueryNEW(InvertedFile invertedFile, SKNNQuery query, float radius) {
+    public List<SKNNQuery.Result> booleanRangeQuery(InvertedFile invertedFile, SKNNQuery query, float radius) {
         PriorityQueue<NNEntry> queue = new PriorityQueue<>(new NNEntryComparatorMinDistance());
         RtreeEntry rtreeEntry = new RtreeEntry(rootID, false);
         queue.add(new NNEntry(rtreeEntry, 0.0));
@@ -469,23 +469,23 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
 
 
     @Override
-    public List<SKNNQuery.Result> booleanKnnQueryNEW(InvertedFile invertedFile, SKNNQuery query, int topk) {
+    public List<SKNNQuery.Result> booleanKnnQuery(InvertedFile invertedFile, SKNNQuery query, int topk) {
         //PriorityQueue<NNEntry> queue = new PriorityQueue(100, new NNEntryComparator());
         PriorityQueue<NNEntry> queue = new PriorityQueue<>(new NNEntryComparatorMinDistance());
 
 
         RtreeEntry rtreeEntry = new RtreeEntry(rootID, false);
         queue.add(new NNEntry(rtreeEntry, 0.0));
-        int count = 0;
+//        int count = 0;
 
         List<SKNNQuery.Result> results = new ArrayList<>();
 
-        while (queue.size() != 0 && results.size() < topk) {
+        while (!queue.isEmpty() && results.size() < topk) {
             NNEntry first = queue.poll();
             rtreeEntry = (RtreeEntry)first.node;
 
             if(rtreeEntry.isLeafEntry) {
-                count++;
+//                count++;
                 results.add(new SKNNQuery.Result(first.node.getIdentifier(), first.minDistance));
 
 //                if(count >= topk)
@@ -502,7 +502,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
                         continue;
                     else {
                         int hit = var;
-                        if(hit < query.query.keywords.size()) //TODO Change to !=
+                        if(hit < query.query.keywords.size()) //TODO Test between != and < (changed from <)
                             continue;
                     }
 
@@ -523,7 +523,7 @@ public class IRTree extends RTree implements ISpatioTextualIndex {
 
 
     @Override
-    public List<SKNNQuery.Result> topkKnnQueryNEW(InvertedFile invertedFile, SKNNQuery query, int topk) {
+    public List<SKNNQuery.Result> topkKnnQuery(InvertedFile invertedFile, SKNNQuery query, int topk) {
         PriorityQueue<NNEntry> queue = new PriorityQueue<>(new NNEntryComparatorMinDistance());
         RtreeEntry rtreeEntry = new RtreeEntry(rootID, false);
         queue.add(new NNEntry(rtreeEntry, 0.0));

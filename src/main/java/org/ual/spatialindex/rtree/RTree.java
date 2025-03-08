@@ -653,7 +653,7 @@ public class RTree implements ISpatialIndex {
                 throw new IllegalArgumentException("Property FillFactor must be a Double");
             }
         }
-
+// TODO HACK FOR TESTING PURPOSES - SET INDEX AND LEAF CAPACITY TO 2
         // index capacity.
         var = ps.getProperty("IndexCapacity");
         if (var != null) {
@@ -1202,24 +1202,14 @@ public class RTree implements ISpatialIndex {
     }
 
 
-    /**
-     * **********************************************************************************
-     * IR
-     * **********************************************************************************
-     *
-     */
+     /** **********************************************************************************
+     *                                  IR Constructor
+     * ********************************************************************************** */
 
     public ArrayList<WeightEntry> ir(IStore ds, InvertedFile invertedFile) {
-
         Node n = readNode(rootID);
 
         return irTraversal(ds, invertedFile, n);
-
-        // Creating IR-Tree...
-        // processing index node 0
-        // processing index node 53
-        // Can't find document 32293
-
     }
 
     private ArrayList<WeightEntry> irTraversal(IStore ds, InvertedFile invertedFile, Node n) {
@@ -1237,7 +1227,6 @@ public class RTree implements ISpatialIndex {
                 }
                 invertedFile.addDocument(n.identifier, docID, document);
             }
-
             ArrayList<WeightEntry> pseudoDoc = invertedFile.store(n.identifier);
 
             return pseudoDoc;
@@ -1246,7 +1235,6 @@ public class RTree implements ISpatialIndex {
 
             invertedFile.create(n.identifier);
             logger.debug("Processing index node: {}", n.identifier);
-            //System.out.println("processing index node " + n.identifier);
 
             int child;
             for (child = 0; child < n.children; child++) {
@@ -1260,13 +1248,11 @@ public class RTree implements ISpatialIndex {
 
                 }
                 invertedFile.addDocument(n.identifier, docID, pseudoDoc);
-
             }
 
             ArrayList<WeightEntry> pseudoDoc = invertedFile.store(n.identifier);
 
             return pseudoDoc;
-
         }
     }
 
