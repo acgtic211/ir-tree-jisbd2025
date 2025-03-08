@@ -27,6 +27,7 @@ public class BuildRTree {
      * @return RTree
      * @throws IOException
      */
+    @Deprecated
     public static RTree buildRTree(DatasetParameters datasetParameters, int fanout ) throws IOException {
 
         LineNumberReader location_reader = new LineNumberReader(new FileReader(datasetParameters.locationFile));
@@ -130,6 +131,7 @@ public class BuildRTree {
             String line;
             String[] temp;
 
+            StatisticsLogic.startMemoryMonitoring();
             long initMem = StatisticsLogic.getClearedMem();
             long startTime = System.currentTimeMillis();
 
@@ -155,16 +157,22 @@ public class BuildRTree {
 
             long endTime = System.currentTimeMillis();
             long endMem = StatisticsLogic.getMemUsed();
-            StatisticsLogic.rTreePeakMemUsed = endMem - initMem;
-            StatisticsLogic.rTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+            StatisticsLogic.stopMemoryMonitoring(); //Stop monitoring
+
+            //StatisticsLogic.rTreePeakMemUsed = endMem - initMem;
+            StatisticsLogic.rTreePeakMemUsed = (StatisticsLogic.getMaxMemoryUsage() - initMem); // This should be more accureate than the previous line, taking into account the peak memory spkikes triggering gc() calls
+            StatisticsLogic.rTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;
+            StatisticsLogic.rTreeJVMPeakMemUsed = StatisticsLogic.getMaxMemoryUsage();
             StatisticsLogic.rTreeBuildTime = (endTime - startTime);
 
             logger.info("Operations: {}", count);
             logger.info("Tree: {}", tree);
             //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
-            logger.info("Rtree build time: {} ms", StatisticsLogic.rTreeBuildTime);
-            logger.info("Rtree peak memory usage: {} Megabytes", (StatisticsLogic.rTreePeakMemUsed/1024)/1024);
-            logger.info("Rtree memory usage: {} Megabytes", (StatisticsLogic.rTreeMemUsed/1024)/1024);
+            logger.info("Rtree (R*) build time: {} ms", StatisticsLogic.rTreeBuildTime);
+            logger.info("Rtree (R*) memory usage: {} Megabytes", (StatisticsLogic.rTreeMemUsed/1024)/1024);
+            logger.info("Rtree (R*) peak memory usage: {} Megabytes", (StatisticsLogic.rTreePeakMemUsed/1024)/1024);
+            logger.info("Rtree (R*) JVM peak memory usage: {} Megabytes", (StatisticsLogic.rTreeJVMPeakMemUsed/1024)/1024);
+
 
             // since we created a new RTree, the PropertySet that was used to initialize the structure
             // now contains the IndexIdentifier property, which can be used later to reuse the index.
@@ -216,9 +224,11 @@ public class BuildRTree {
             String line;
             String[] temp;
 
+            StatisticsLogic.startMemoryMonitoring();
             long initMem = StatisticsLogic.getClearedMem();
             long startTime = System.currentTimeMillis();
 
+            logger.info("Reading spatial data and storing it in pseudo nodes");
             while ((line = locationReader.readLine()) != null) {
                 temp = line.split(",");
                 id = Integer.parseInt(temp[0]);
@@ -234,20 +244,10 @@ public class BuildRTree {
                 //tree.storePseudoNodes(null, region, id);
                 tree.storePseudoNodes(new NodeData(0), region, id);
 
-
-                //            if ((count % 1000) == 0)
-                //                logger.debug("Count: {}", count);
-
                 count++;
             }
 
-            System.out.println("Processing pseudo nodes");
-
-            //BulkLoader bulkLoader = new BulkLoader();
-            //bulkLoader.bulkLoadUsingSTR(tree, tree.pseudoNodes, capacity, dimension);
-
-            //BulkLoader bulkLoader = new BulkLoader();
-            //bulkLoader.bulkLoadUsingSTR(tree, tree.pseudoNodes, capacity, dimension, 10000, 100);
+            logger.info("Processing pseudo nodes");
             tree.bulkLoadRTree(bulkLoadMethod, indexCapacity, leafCapacity);
 
             // TODO CHECK if this should be here or in the RTREE
@@ -255,20 +255,25 @@ public class BuildRTree {
             tree.pseudoNodes.clear();
 
             //BulkLoader.bulkLoadUsingSTR(tree, tree.pseudoNodes, capacity, dimension);
-            System.out.println("Done processing pseudo nodes");
+            logger.info("Done processing pseudo nodes");
 
             long endTime = System.currentTimeMillis();
-            long endMem = StatisticsLogic.getMemUsed();
-            StatisticsLogic.rTreePeakMemUsed = endMem - initMem;
-            StatisticsLogic.rTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+            //long endMem = StatisticsLogic.getMemUsed();
+            StatisticsLogic.stopMemoryMonitoring(); //Stop monitoring
+
+            //StatisticsLogic.rTreePeakMemUsed = endMem - initMem;
+            StatisticsLogic.rTreePeakMemUsed = (StatisticsLogic.getMaxMemoryUsage() - initMem); // This should be more accureate than the previous line, taking into account the peak memory spkikes triggering gc() calls
+            StatisticsLogic.rTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;
+            StatisticsLogic.rTreeJVMPeakMemUsed = StatisticsLogic.getMaxMemoryUsage();
             StatisticsLogic.rTreeBuildTime = (endTime - startTime);
 
             logger.info("Operations: {}", count);
             logger.info("Tree: {}", tree);
             //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
-            logger.info("Rtree build time with BulkLoading: {} ms", StatisticsLogic.rTreeBuildTime);
-            logger.info("Rtree peak memory usage: {} Megabytes", (StatisticsLogic.rTreePeakMemUsed/1024)/1024);
-            logger.info("Rtree memory usage: {} Megabytes", (StatisticsLogic.rTreeMemUsed/1024)/1024);
+            logger.info("Rtree (STR) build time: {} ms", StatisticsLogic.rTreeBuildTime);
+            logger.info("Rtree (STR) memory usage: {} Megabytes", (StatisticsLogic.rTreeMemUsed/1024)/1024);
+            logger.info("Rtree (STR) peak memory usage: {} Megabytes", (StatisticsLogic.rTreePeakMemUsed/1024)/1024);
+            logger.info("Rtree (STR) JVM peak memory usage: {} Megabytes", (StatisticsLogic.rTreeJVMPeakMemUsed/1024)/1024);
 
             // since we created a new RTree, the PropertySet that was used to initialize the structure
             // now contains the IndexIdentifier property, which can be used later to reuse the index.
@@ -290,7 +295,8 @@ public class BuildRTree {
 
 
 
-
+    //TODO: Remove this method
+    @Deprecated
     public static RTree buildRTreeSTRNEW(DatasetParameters datasetParameters, int fanout, double fillFactor, int dimension, int indexCapacity, int leafCapacity, int bufferSize, int numberOfPages) {//int fanout, double fillFactor, int dimension) {
         try(LineNumberReader locationReader = new LineNumberReader((new FileReader(datasetParameters.locationFile)))) {
             // Create a memory based storage manager.

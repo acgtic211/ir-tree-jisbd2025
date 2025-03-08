@@ -9,6 +9,7 @@ import org.ual.spatialindex.storage.WeightEntry;
 import org.ual.utils.main.StatisticsLogic;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class BuildIRTree {
     private static final Logger logger = LogManager.getLogger(BuildIRTree.class);
@@ -23,28 +24,29 @@ public class BuildIRTree {
         // In memory inverted file
         InvertedFile invertedFile = new InvertedFile();
 
+        // Start the timers
         long initMem = StatisticsLogic.getClearedMem();
         long startTime = System.currentTimeMillis();
+        StatisticsLogic.startMemoryMonitoring();//Start monitoring
 
+        // Build the inverted file
         ArrayList<WeightEntry> invertedIndex = tree.ir(dms, invertedFile);
 
+        // Stop the timers
         long endTime = System.currentTimeMillis();
-        long endMem = StatisticsLogic.getMemUsed();
-        StatisticsLogic.irTreePeakMemUsed = (endMem - initMem);
-        StatisticsLogic.irTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;//StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
+        //long endMem = StatisticsLogic.getMemUsed();
+        StatisticsLogic.stopMemoryMonitoring(); //Stop monitoring
+
+        //StatisticsLogic.irTreePeakMemUsed = (endMem - initMem);
+        StatisticsLogic.irTreePeakMemUsed = (StatisticsLogic.getMaxMemoryUsage() - initMem); // This should be more accureate than the previous line, taking into account the peak memory spkikes triggering gc() calls
+        StatisticsLogic.irTreeMemUsed = StatisticsLogic.getClearedMem() - initMem;
+        StatisticsLogic.irTreeJVMPeakMemUsed = StatisticsLogic.getMaxMemoryUsage();
         StatisticsLogic.irTreeBuildTime = (endTime - startTime);
 
         logger.info("IRtree build in: {} ms", StatisticsLogic.irTreeBuildTime);
-        logger.info("IRtree peak memory usage: {} Megabytes", (StatisticsLogic.irTreePeakMemUsed/1024)/1024);
         logger.info("IRtree memory usage: {} Megabytes", (StatisticsLogic.irTreeMemUsed/1024)/1024);
-
-        //StatisticsLogic.cleanMem((int) tree.getStatistics().getNumberOfNodes(), initMem); //Call gc()
-        //long memUsed = StatisticsLogic.getMemUsed();
-
-        //logger.info("Time: {} minutes", ((end - start) / 1000.0f) / 60.0f);
-        //logger.info("IRtree build in: {} ms", (end - start));
-        //logger.info("IRtree memory usage: {} Megabytes", ((endMem - initMem)/1024)/1024);
-        //logger.info("IRtree memory usage: {} Megabytes", ((memUsed)/1024)/1024);
+        logger.info("IRtree peak memory usage: {} Megabytes", (StatisticsLogic.irTreePeakMemUsed/1024)/1024);
+        logger.info("IRtree JVM peak memory usage: {} Megabytes", (StatisticsLogic.irTreeJVMPeakMemUsed/1024)/1024);
 
         boolean ret = tree.isIndexValid();
         if (!ret)
