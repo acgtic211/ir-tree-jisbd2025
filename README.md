@@ -4,7 +4,7 @@
 Run <code>NewMain.java</code> to run the program. All options, including the dataset selection, are implemented in menus.
 
 ## Requirements
-IMPORTANT: Due to its size, the _Parks_ dataset is not included in the repository. You can download it from LINK. After downloading, extract the files and place them in the <code>resources/data</code> folder.
+IMPORTANT: Due to its size, the _Parks_ dataset is not included in the repository. You can download it from [LINK](https://drive.google.com/file/d/1me1-s-4F8_odf378kIPaTg8uEZ-52RrU/view?usp=sharing). After downloading, extract the files and place them in the <code>resources/data</code> folder.
 
 ## Configuration
 All parameters are set in the <code>NewMain.java</code> file. Simply change the values of the variables to change the configuration (ie. fanout).
